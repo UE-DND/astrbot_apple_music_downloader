@@ -7,7 +7,7 @@
 - AstrBot v3.4.0+
 - Docker Engine
 
-## 🚀 安装步骤
+## 安装步骤
 
 1. 进入 AstrBot 目录安装
 
@@ -37,13 +37,13 @@
 
 | 指令 | 说明 | 示例 |
 |------|------|------|
-| `/am dl <链接> [音质]` | 下载单曲 | `/am dl https://music.apple.com/cn/album/xxx/123?i=456` |
-| `/am clean` | 清理所有下载文件 | `/am clean` |
-| `/am status` | 查看服务状态 | `/am status` |
-| `/am start` | 启动服务 | `/am start` |
-| `/am stop` | 停止服务 | `/am stop` |
-| `/am build` | 构建镜像 | `/am build` |
-| `/am help` | 显示帮助 | `/am help` |
+| `/am 链接 音质` | 下载单曲 | `/am https://music.apple.com/cn/album/xxx/123?i=456` |
+| `/am_clean` | 清理所有下载文件 | `/am_clean` |
+| `/am_status` | 查看服务状态 | `/am_status` |
+| `/am_start` | 启动服务 | `/am_start` |
+| `/am_stop` | 停止服务 | `/am_stop` |
+| `/am_build` | 构建镜像 | `/am_build` |
+| `/am_help` | 显示帮助 | `/am_help` |
 
 ### 音质选项
 
@@ -57,13 +57,13 @@
 
 ```txt
 # 下载单曲（默认无损）
-/am dl https://music.apple.com/cn/album/xxx/123456?i=789
+/am https://music.apple.com/cn/album/xxx/123456?i=789
 
 # 下载单曲（杜比全景声）
-/am dl https://music.apple.com/cn/album/xxx/123456?i=789 atmos
+/am https://music.apple.com/cn/album/xxx/123456?i=789 atmos
 
 # 下载单曲（AAC）
-/am dl https://music.apple.com/cn/album/xxx/123456?i=789 aac
+/am https://music.apple.com/cn/album/xxx/123456?i=789 aac
 ```
 
 ## ⚙️ 配置说明
@@ -85,7 +85,7 @@
 首次使用时，插件会自动构建 Docker 镜像，这可能需要 5-10 分钟。
 
 1. 确保 Docker 已启动
-2. 发送 `/am build` 手动构建镜像（可选）
+2. 进入后端手动[构建镜像](#安装步骤)
 3. 发送 `/am status` 检查服务状态
 
 ## ⚠️ 注意事项
