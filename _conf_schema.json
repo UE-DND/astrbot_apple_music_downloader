@@ -1,0 +1,184 @@
+{
+  "downloader_path": {
+    "description": "apple-music-downloader 目录路径",
+    "type": "string",
+    "default": "apple-music-downloader",
+    "hint": "相对于插件目录或绝对路径，包含 Dockerfile.downloader、config.yaml 等文件"
+  },
+  "auto_start_wrapper": {
+    "description": "是否自启动 Wrapper 服务",
+    "type": "bool",
+    "default": true,
+    "hint": "启用后，首次下载时会自动启动 Docker Wrapper 容器"
+  },
+  "download_timeout": {
+    "description": "下载超时时间（秒）",
+    "type": "int",
+    "default": 600,
+    "hint": "单曲下载最长等待时间，超时将取消任务"
+  },
+  "max_file_size_mb": {
+    "description": "最大发送文件大小（MB）",
+    "type": "int",
+    "default": 200,
+    "hint": "超过此大小的文件将不会发送，仅保存在服务器"
+  },
+  "send_cover": {
+    "description": "是否发送专辑封面",
+    "type": "bool",
+    "default": true,
+    "hint": "下载完成后是否同时发送专辑封面图片"
+  },
+  "debug_mode": {
+    "description": "调试模式",
+    "type": "bool",
+    "default": false,
+    "hint": "启用后会输出详细的 Docker 日志和调试信息"
+  },
+  "docker_log_lines": {
+    "description": "日志行数",
+    "type": "int",
+    "default": 100,
+    "hint": "调试模式下显示的 Docker 日志行数"
+  },
+  "docker_host": {
+    "description": "Docker 主机地址",
+    "type": "string",
+    "default": "",
+    "hint": "留空使用默认 Docker，或填写远程地址如 tcp://192.168.1.100:2375"
+  },
+  "wrapper_ports": {
+    "description": "Wrapper 服务端口配置",
+    "type": "object",
+    "items": {
+      "decrypt_port": {
+        "description": "解密服务端口",
+        "type": "int",
+        "default": 10020
+      },
+      "m3u8_port": {
+        "description": "M3U8 服务端口",
+        "type": "int",
+        "default": 20020
+      }
+    }
+  },
+  "downloader_config": {
+    "description": "下载器配置",
+    "type": "object",
+    "hint": "Apple Music 下载器的详细配置",
+    "items": {
+      "media_user_token": {
+        "description": "Media User Token",
+        "type": "text",
+        "default": "",
+        "hint": "获取歌词和 AAC-LC 音质需要此 Token，可从 Apple Music 网页版获取"
+      },
+      "storefront": {
+        "description": "歌曲来源代码",
+        "type": "string",
+        "default": "cn",
+        "hint": "国家/地区代码"
+      },
+      "default_quality": {
+        "description": "默认下载音质",
+        "type": "string",
+        "default": "alac",
+        "options": ["alac", "aac", "atmos"],
+        "hint": "alac: 无损, aac: 高品质AAC, atmos: 杜比全景声"
+      },
+      "alac_max": {
+        "description": "ALAC 最高采样率",
+        "type": "int",
+        "default": 192000,
+        "hint": "可选: 192000, 96000, 48000, 44100"
+      },
+      "atmos_max": {
+        "description": "Atmos 最高比特率",
+        "type": "int",
+        "default": 2768,
+        "hint": "可选: 2768, 2448"
+      },
+      "aac_type": {
+        "description": "AAC 类型",
+        "type": "string",
+        "default": "aac-lc",
+        "options": ["aac-lc", "aac", "aac-binaural", "aac-downmix"],
+        "hint": "aac-lc: 标准AAC, aac-binaural: 双耳, aac-downmix: 混音"
+      },
+      "embed_lrc": {
+        "description": "嵌入歌词",
+        "type": "bool",
+        "default": true,
+        "hint": "将歌词嵌入到音频文件中"
+      },
+      "save_lrc_file": {
+        "description": "保存歌词文件",
+        "type": "bool",
+        "default": false,
+        "hint": "单独保存 .lrc 歌词文件"
+      },
+      "lrc_type": {
+        "description": "歌词类型",
+        "type": "string",
+        "default": "lyrics",
+        "options": ["lyrics", "syllable-lyrics"],
+        "hint": "lyrics: 普通歌词, syllable-lyrics: 逐字歌词"
+      },
+      "embed_cover": {
+        "description": "嵌入封面",
+        "type": "bool",
+        "default": true,
+        "hint": "将封面嵌入到音频文件中"
+      },
+      "cover_size": {
+        "description": "封面尺寸",
+        "type": "string",
+        "default": "5000x5000"
+      },
+      "cover_format": {
+        "description": "封面格式",
+        "type": "string",
+        "default": "jpg",
+        "options": ["jpg", "png", "original"]
+      },
+      "convert_after_download": {
+        "description": "下载后转换格式",
+        "type": "bool",
+        "default": true,
+        "hint": "启用后下载完成后自动转换格式（需要 ffmpeg）"
+      },
+      "convert_format": {
+        "description": "转换目标格式",
+        "type": "string",
+        "default": "",
+        "options": ["", "flac", "mp3", "opus", "wav"],
+        "hint": "留空表示不转换，保持原格式"
+      },
+      "convert_keep_original": {
+        "description": "保留原始文件",
+        "type": "bool",
+        "default": false,
+        "hint": "转换后是否保留原始文件"
+      },
+      "album_folder_format": {
+        "description": "专辑文件夹格式",
+        "type": "string",
+        "default": "{AlbumName}",
+        "hint": "支持变量: {AlbumId} {AlbumName} {ArtistName} {ReleaseDate} {ReleaseYear} {Quality} {Codec}"
+      },
+      "song_file_format": {
+        "description": "歌曲文件名格式",
+        "type": "string",
+        "default": "{SongNumer}. {SongName}",
+        "hint": "支持变量: {SongId} {SongNumer} {SongName} {DiscNumber} {TrackNumber} {Quality} {Codec}"
+      },
+      "artist_folder_format": {
+        "description": "艺术家文件夹格式",
+        "type": "string",
+        "default": "{UrlArtistName}",
+        "hint": "支持变量: {ArtistId} {ArtistName} {UrlArtistName}，留空则不创建艺术家文件夹"
+      }
+    }
+  }
+}

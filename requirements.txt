@@ -1,0 +1,2 @@
+# Apple Music Downloader Plugin Dependencies
+pyyaml>=6.0
