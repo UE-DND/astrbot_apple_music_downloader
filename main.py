@@ -153,13 +153,7 @@ class AppleMusicDownloader(Star):
             return 0
     
     
-    @filter.command_group("am", alias={"applemusic", "apple"})
-    def am_group(self):
-        """Apple Music 下载器指令组"""
-        pass
-    
-    
-    @am_group.command("dl", alias={"download", "下载"})
+    @filter.command("am", alias={"applemusic", "apple"})
     async def download_music(self, event: AstrMessageEvent, url: str, 
                              quality: str = ""):
         dl_config = self.config.get("downloader_config", {})
@@ -279,7 +273,7 @@ class AppleMusicDownloader(Star):
                 f"> 还有 {len(result.file_paths) - 5} 个文件已保存到服务器"
             ))
     
-    @am_group.command("status", alias={"状态"})
+    @filter.command("am_status", alias={"am状态"})
     async def check_status(self, event: AstrMessageEvent):
         """查看服务状态"""
         if not self.docker_service:
@@ -308,7 +302,7 @@ class AppleMusicDownloader(Star):
         
         yield event.plain_result("\n".join(status_lines))
     
-    @am_group.command("start", alias={"启动"})
+    @filter.command("am_start", alias={"am启动"})
     async def start_service(self, event: AstrMessageEvent):
         """启动 Wrapper 服务"""
         if not self.docker_service:
@@ -324,7 +318,7 @@ class AppleMusicDownloader(Star):
         else:
             yield event.plain_result(f"× {msg}")
     
-    @am_group.command("stop", alias={"停止"})
+    @filter.command("am_stop", alias={"am停止"})
     async def stop_service(self, event: AstrMessageEvent):
         """停止 Wrapper 服务"""
         if not self.docker_service:
@@ -338,11 +332,11 @@ class AppleMusicDownloader(Star):
         else:
             yield event.plain_result(f"× {msg}")
     
-    @am_group.command("build", alias={"构建"})
+    @filter.command("am_build", alias={"am构建"})
     async def build_images(self, event: AstrMessageEvent, target: str = "all"):
         """构建 Docker 镜像
         
-        用法: /am build [目标]
+        用法: /am_build [目标]
         目标: all / wrapper / downloader
         """
         if not self.docker_service:
@@ -361,25 +355,25 @@ class AppleMusicDownloader(Star):
             success, msg = await self.docker_service.build_downloader_image()
             yield event.plain_result(f"{'√' if success else '×'} 下载器: {msg}")
     
-    @am_group.command("help", alias={"帮助", "?"})
+    @filter.command("am_help", alias={"am帮助", "am?"})
     async def show_help(self, event: AstrMessageEvent):
         """显示帮助信息"""
         help_text = """♪ Apple Music Downloader 使用帮助
 
 > 下载指令:
-  /am dl <单曲链接> [音质]
+  /am 单曲链接 音质
   音质可选: alac(无损) / aac / atmos(杜比)
 
 > 示例:
-  /am dl https://music.apple.com/cn/album/xxx/123?i=456
-  /am dl https://...?i=456 atmos
+  /am https://music.apple.com/cn/album/xxx/123?i=456
+  /am https://...?i=456 atmos
 
 > 服务管理:
-  /am status  - 查看服务状态
-  /am start   - 启动服务
-  /am stop    - 停止服务
-  /am build   - 构建镜像
-  /am clean   - 手动清理下载文件
+  /am_status  - 查看服务状态
+  /am_start   - 启动服务
+  /am_stop    - 停止服务
+  /am_build   - 构建镜像
+  /am_clean   - 手动清理下载文件
 
 * 支持的链接类型:
   • 仅支持单曲链接 (带 ?i= 参数)
@@ -391,7 +385,7 @@ class AppleMusicDownloader(Star):
         
         yield event.plain_result(help_text)
     
-    @am_group.command("clean", alias={"清理"})
+    @filter.command("am_clean", alias={"am清理"})
     async def clean_downloads(self, event: AstrMessageEvent):
         """手动清理下载文件"""
         yield event.plain_result("> 正在清理下载文件...")

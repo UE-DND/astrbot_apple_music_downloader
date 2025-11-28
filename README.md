@@ -37,13 +37,13 @@
 
 | 指令 | 说明 | 示例 |
 |------|------|------|
-| `/am dl <链接> [音质]` | 下载单曲 | `/am dl https://music.apple.com/cn/album/xxx/123?i=456` |
-| `/am clean` | 清理所有下载文件 | `/am clean` |
-| `/am status` | 查看服务状态 | `/am status` |
-| `/am start` | 启动服务 | `/am start` |
-| `/am stop` | 停止服务 | `/am stop` |
-| `/am build` | 构建镜像 | `/am build` |
-| `/am help` | 显示帮助 | `/am help` |
+| `/am 链接 音质` | 下载单曲 | `/am https://music.apple.com/cn/album/xxx/123?i=456` |
+| `/am_clean` | 清理所有下载文件 | `/am_clean` |
+| `/am_status` | 查看服务状态 | `/am_status` |
+| `/am_start` | 启动服务 | `/am_start` |
+| `/am_stop` | 停止服务 | `/am_stop` |
+| `/am_build` | 构建镜像 | `/am_build` |
+| `/am_help` | 显示帮助 | `/am_help` |
 
 ### 音质选项
 
@@ -57,13 +57,13 @@
 
 ```txt
 # 下载单曲（默认无损）
-/am dl https://music.apple.com/cn/album/xxx/123456?i=789
+/am https://music.apple.com/cn/album/xxx/123456?i=789
 
 # 下载单曲（杜比全景声）
-/am dl https://music.apple.com/cn/album/xxx/123456?i=789 atmos
+/am https://music.apple.com/cn/album/xxx/123456?i=789 atmos
 
 # 下载单曲（AAC）
-/am dl https://music.apple.com/cn/album/xxx/123456?i=789 aac
+/am https://music.apple.com/cn/album/xxx/123456?i=789 aac
 ```
 
 ## ⚙️ 配置说明
