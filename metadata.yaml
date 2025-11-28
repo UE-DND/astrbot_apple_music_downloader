@@ -1,7 +1,7 @@
 name: astrbot_plugin_applemusicdownloader
 display_name: Apple Music Downloader
 desc: Apple Music Downloader
-version: v0.0.1
+version: v0.1.0
 author: UE-DND
 repo: https://github.com/UE-DND/astrbot_apple_music_downloader
 homepage: https://github.com/UE-DND/astrbot_apple_music_downloader
