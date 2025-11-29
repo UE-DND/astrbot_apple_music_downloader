@@ -155,6 +155,14 @@ class AppleMusicDownloader(Star):
                              quality: str = ""):
         dl_config = self.config.get("downloader_config", {})
         default_quality = dl_config.get("default_quality", "alac")
+
+        parsed = URLParser.parse(url)
+        if not parsed or parsed.get("type") != "song":
+            yield event.plain_result(
+                "× 仅支持 Apple Music 单曲链接\n"
+                "请使用包含 '?i=' 参数的单曲分享链接或 /song/ 路径的链接"
+            )
+            return
         
         quality_map = {
             "": default_quality,

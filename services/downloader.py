@@ -6,6 +6,7 @@ Apple Music Downloader - Docker 服务管理模块
 
 import asyncio
 import os
+import platform
 import re
 import shutil
 import time
@@ -217,6 +218,11 @@ class DockerService:
         if os.path.isabs(dl_path):
             return Path(dl_path)
         return self.plugin_dir / dl_path
+
+    @property
+    def _bash_path(self) -> Optional[str]:
+        """返回可用的 bash 路径，不存在时返回 None"""
+        return shutil.which("bash")
 
     @property
     def _cache_file(self) -> Path:
@@ -603,6 +609,14 @@ class DockerService:
                 error=f"找不到 {config_file}"
             )
 
+        # Windows 上若缺少 Git Bash，会导致 start.sh 无法运行，此处提前给出友好提示
+        if platform.system().lower() == "windows" and not self._bash_path:
+            return DownloadResult(
+                success=False,
+                message="下载失败",
+                error="未检测到 bash。Windows 环境请安装 Git Bash 并将 bash 添加到 PATH，或在 WSL/Ubuntu 环境下运行。"
+            )
+
         save_paths = self.get_save_paths()
         downloads_dir = save_paths.get(quality.value, list(save_paths.values())[0])
         downloads_dir.mkdir(parents=True, exist_ok=True)
@@ -614,7 +628,7 @@ class DockerService:
             return cached
 
         cmd = [
-            "bash",
+            self._bash_path or "bash",
             str(self.downloader_path / "start.sh"),
             "--non-interactive",
             "--use-saved",
@@ -864,10 +878,10 @@ class URLParser:
             r'^https://(?:beta\.)?music\.apple\.com/(\w{2})/album/[^/]+/(\d+)(?:\?.*)?$'
         ),
         'song': re.compile(
-            r'^https://(?:beta\.)?music\.apple\.com/(\w{2})/album/[^/]+/(\d+)\?i=(\d+)$'
+            r'^https://(?:beta\.)?music\.apple\.com/(\w{2})/album/[^/]+/(\d+)\?i=(\d+)(?:[&#].*)?$'
         ),
         'song_direct': re.compile(
-            r'^https://(?:beta\.)?music\.apple\.com/(\w{2})/song/[^/]+/(\d+)(?:\?.*)?$'
+            r'^https://(?:beta\.)?music\.apple\.com/(\w{2})/song/[^/]+/(\d+)(?:[?#].*)?$'
         ),
         'playlist': re.compile(
             r'^https://(?:beta\.)?music\.apple\.com/(\w{2})/playlist/[^/]+/(pl\.[\w-]+)(?:\?.*)?$'
