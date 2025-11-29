@@ -14,7 +14,7 @@
   "download_timeout": {
     "description": "下载超时时间（秒）",
     "type": "int",
-    "default": 600,
+    "default": 120,
     "hint": "单曲下载最长等待时间，超时将取消任务"
   },
   "max_file_size_mb": {
