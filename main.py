@@ -96,61 +96,58 @@ class AppleMusicDownloader(Star):
     
     async def _cleanup_downloads(self):
         """清理所有下载的文件"""
-        try:
-            downloads_dir = self.plugin_dir / "apple-music-downloader" / "AM-DL downloads"
-            
-            if not downloads_dir.exists():
-                logger.info("下载目录不存在，无需清理")
-                return 0
-            
-            items = list(downloads_dir.iterdir())
-            if not items:
-                logger.info("下载目录已为空，无需清理")
-                return 0
-            
-            try:
-                cmd = [
-                    "sudo", "find", str(downloads_dir),
-                    "-mindepth", "1",
-                    "-delete"
-                ]
-                
-                process = await asyncio.create_subprocess_exec(
-                    *cmd,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
-                )
-                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=120)
-                
-                if process.returncode == 0:
-                    logger.info(f"使用 sudo find 清理完成，共清理 {len(items)} 个文件/文件夹")
-                    return len(items)
-                else:
-                    error_msg = stderr.decode('utf-8', errors='replace').strip()
-                    logger.warning(f"sudo find 清理失败: {error_msg}，尝试普通清理")
-            except Exception as e:
-                logger.warning(f"sudo 清理失败: {e}，尝试普通清理")
-            
-            cleaned_count = 0
-            for item in items:
-                try:
-                    if item.is_file():
-                        item.unlink()
-                        cleaned_count += 1
-                    elif item.is_dir():
-                        shutil.rmtree(item)
-                        cleaned_count += 1
-                except PermissionError:
-                    logger.warning(f"权限不足，无法清理 {item.name}（需要配置 sudoers 免密码）")
-                except Exception as e:
-                    logger.warning(f"清理文件失败 {item}: {e}")
-            
-            logger.info(f"定时清理完成，共清理 {cleaned_count} 个文件/文件夹")
-            return cleaned_count
-            
-        except Exception as e:
-            logger.error(f"清理下载文件失败: {e}")
+        if not self.docker_service:
+            logger.warning("Docker 服务未初始化，无法清理下载目录")
             return 0
+
+        try:
+            download_dirs = self.docker_service.get_download_dirs()
+        except Exception as e:
+            logger.error(f"获取下载目录失败: {e}")
+            return 0
+
+        if not download_dirs:
+            logger.info("未找到下载目录配置，无需清理")
+            return 0
+
+        cleaned_count = 0
+        had_items = False
+
+        for downloads_dir in download_dirs:
+            try:
+                if not downloads_dir.exists():
+                    logger.info(f"下载目录不存在，跳过: {downloads_dir}")
+                    continue
+
+                items = list(downloads_dir.iterdir())
+                if not items:
+                    continue
+
+                had_items = True
+
+                for item in items:
+                    try:
+                        if item.is_file() or item.is_symlink():
+                            item.unlink()
+                        elif item.is_dir():
+                            shutil.rmtree(item)
+                        cleaned_count += 1
+                    except PermissionError:
+                        logger.warning(f"权限不足，无法清理 {item}")
+                    except Exception as e:
+                        logger.warning(f"清理文件失败 {item}: {e}")
+            except Exception as e:
+                logger.warning(f"清理目录 {downloads_dir} 时出错: {e}")
+                continue
+
+        if cleaned_count > 0:
+            logger.info(f"定时清理完成，共清理 {cleaned_count} 个文件/文件夹")
+        elif had_items:
+            logger.info("下载目录已为空，无需清理")
+        else:
+            logger.info("未找到可清理的文件")
+
+        return cleaned_count
     
     
     @filter.command("am", alias={"applemusic", "apple"})

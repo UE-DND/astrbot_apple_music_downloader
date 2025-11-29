@@ -225,6 +225,56 @@ class DockerService:
     @property
     def _cache_ttl(self) -> float:
         return float(self.cache_ttl)
+
+    def _load_downloader_config(self) -> dict:
+        """读取下载器配置文件，失败时使用默认配置生成结果"""
+        config_path = self.downloader_path / "config.yaml"
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = yaml.safe_load(f) or {}
+                    if isinstance(config, dict):
+                        return config
+                    logger.warning("下载器配置格式异常，使用默认配置")
+            except Exception as e:
+                logger.warning(f"读取下载器配置失败，将使用默认配置: {e}")
+        return ConfigGenerator.generate_config(self.config)
+
+    def _resolve_save_path(self, folder: str) -> Path:
+        """根据配置值解析保存目录（支持相对路径和绝对路径）"""
+        if os.path.isabs(folder):
+            return Path(folder)
+        return self.downloader_path / folder
+
+    def get_save_paths(self) -> Dict[str, Path]:
+        """获取不同音质对应的下载目录"""
+        config = self._load_downloader_config()
+        return {
+            "alac": self._resolve_save_path(
+                str(config.get("alac-save-folder", ConfigGenerator.DEFAULT_CONFIG["alac-save-folder"]))
+            ),
+            "aac": self._resolve_save_path(
+                str(config.get("aac-save-folder", ConfigGenerator.DEFAULT_CONFIG["aac-save-folder"]))
+            ),
+            "atmos": self._resolve_save_path(
+                str(config.get("atmos-save-folder", ConfigGenerator.DEFAULT_CONFIG["atmos-save-folder"]))
+            ),
+        }
+
+    def get_download_dirs(self, quality: Optional[DownloadQuality] = None) -> List[Path]:
+        """返回当前配置下的下载目录，按需要可指定音质"""
+        save_paths = self.get_save_paths()
+        if quality:
+            return [save_paths.get(quality.value, list(save_paths.values())[0])]
+        seen = set()
+        dirs: List[Path] = []
+        for path in save_paths.values():
+            resolved = path.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            dirs.append(path)
+        return dirs
     
     def _sync_config(self):
         """同步插件配置到下载器 config.yaml"""
@@ -427,9 +477,11 @@ class DockerService:
             code, stdout, _ = await self._run_command(
                 ["docker", "logs", "--tail", "50", self.WRAPPER_CONTAINER_NAME]
             )
-            status.decrypt_port_listening = f"listening" in stdout and "10020" in stdout
-            status.m3u8_port_listening = f"listening" in stdout and "20020" in stdout
-        
+            port_decrypt = str(self.decrypt_port)
+            port_m3u8 = str(self.m3u8_port)
+            status.decrypt_port_listening = "listening" in stdout and port_decrypt in stdout
+            status.m3u8_port_listening = "listening" in stdout and port_m3u8 in stdout
+
         return status
     
     async def build_wrapper_image(self) -> Tuple[bool, str]:
@@ -543,9 +595,6 @@ class DockerService:
     async def download(self, url: str, quality: DownloadQuality = DownloadQuality.ALAC,
                        single_song: bool = False) -> DownloadResult:
         """执行下载任务（通过 start.sh 调用容器）"""
-        downloads_dir = self.downloader_path / "AM-DL downloads"
-        downloads_dir.mkdir(exist_ok=True)
-        
         config_file = self.downloader_path / "config.yaml"
         if not config_file.exists():
             return DownloadResult(
@@ -553,6 +602,10 @@ class DockerService:
                 message="配置文件不存在",
                 error=f"找不到 {config_file}"
             )
+
+        save_paths = self.get_save_paths()
+        downloads_dir = save_paths.get(quality.value, list(save_paths.values())[0])
+        downloads_dir.mkdir(parents=True, exist_ok=True)
         
         cached = self._get_cached_download(url, quality, single_song)
         if cached:
@@ -631,7 +684,7 @@ class DockerService:
             )
         
         downloaded_files = self._find_recent_files(downloads_dir)
-        cover_path = self._find_cover(downloads_dir)
+        cover_path = self._find_cover([downloads_dir])
         
         if self.debug_mode:
             logger.info(f"[DEBUG] 找到的文件: {downloaded_files}")
@@ -783,20 +836,23 @@ class DockerService:
         
         return sorted(recent_files, key=os.path.getmtime, reverse=True)
     
-    def _find_cover(self, directory: Path) -> Optional[str]:
-        """查找封面文件"""
+    def _find_cover(self, directories: List[Path]) -> Optional[str]:
+        """在指定的下载目录中查找最近的封面文件"""
         current_time = time.time()
-        
-        for root, _, files in os.walk(directory):
-            for file in files:
-                if file.lower() in ('cover.jpg', 'cover.png', 'folder.jpg'):
-                    file_path = os.path.join(root, file)
-                    try:
-                        mtime = os.path.getmtime(file_path)
-                        if current_time - mtime < 300:
-                            return file_path
-                    except OSError:
-                        continue
+
+        for directory in directories:
+            if not directory.exists():
+                continue
+            for root, _, files in os.walk(directory):
+                for file in files:
+                    if file.lower() in ('cover.jpg', 'cover.png', 'folder.jpg'):
+                        file_path = os.path.join(root, file)
+                        try:
+                            mtime = os.path.getmtime(file_path)
+                            if current_time - mtime < 300:
+                                return file_path
+                        except OSError:
+                            continue
         return None
 
 
