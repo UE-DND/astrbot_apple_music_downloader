@@ -417,8 +417,52 @@ class AppleMusicDownloader(Star):
         yield event.plain_result(help_text)
 
     @filter.command("am_clean", alias={"am清理"})
-    async def clean_downloads(self, event: AstrMessageEvent):
-        """手动清理下载文件"""
+    async def clean_downloads(self, event: AstrMessageEvent, force: str = ""):
+        """手动清理下载文件
+
+        参数:
+        force: 输入 "sudo" 可强制使用 Docker 清理
+        """
+        is_force = force.lower() == "sudo"
+
+        if is_force:
+            yield event.plain_result("> 正在尝试强制清理...")
+
+            if not self.docker_service:
+                yield event.plain_result("× 服务未初始化")
+                return
+
+            download_dirs = self.docker_service.get_download_dirs()
+            if not download_dirs:
+                yield event.plain_result("√ 未找到下载目录配置")
+                return
+
+            success_count = 0
+            fail_count = 0
+            total_items_cleaned = 0
+
+            for d in download_dirs:
+                if not d.exists():
+                    continue
+
+                success, msg, count = await self.docker_service.force_clean(d)
+                if success:
+                    success_count += 1
+                    total_items_cleaned += count
+                else:
+                    fail_count += 1
+                    logger.warning(f"强制清理失败 {d}: {msg}")
+
+            if fail_count == 0:
+                if total_items_cleaned > 0:
+                    yield event.plain_result(
+                        f"√ 强制清理完成，共删除 {total_items_cleaned} 个项目"
+                    )
+                else:
+                    yield event.plain_result("√ 强制清理完成，目录已为空")
+            else:
+                yield event.plain_result(f"部分清理失败，请检查日志")
+            return
         yield event.plain_result("> 正在清理下载文件...")
 
         cleaned_count, error_count = await self._cleanup_downloads()
@@ -428,17 +472,10 @@ class AppleMusicDownloader(Star):
             msg.append(f"√ 清理完成，共删除 {cleaned_count} 个项目")
 
         if error_count > 0:
-            msg.append(f"! 有 {error_count} 个文件清理失败（可能被占用或权限不足）")
+            msg.append(f"有 {error_count} 个文件清理失败（可能被占用或权限不足）")
+            msg.append("* 可尝试使用 /am_clean sudo 进行强制清理")
 
         if cleaned_count == 0 and error_count == 0:
             msg.append("√ 下载目录已为空，无需清理")
 
         yield event.plain_result("\n".join(msg))
-
-    @filter.command("amdl", alias={"am下载"})
-    async def quick_download(
-        self, event: AstrMessageEvent, url: str, quality: str = ""
-    ):
-        """快捷下载指令（/amdl 等同于 /am dl）"""
-        async for result in self.download_music(event, url, quality):
-            yield result

@@ -965,6 +965,44 @@ class DockerService:
                             continue
         return None
 
+    async def force_clean(self, directory: Path) -> Tuple[bool, str, int]:
+        """强制清理下载目录"""
+        if not await self.check_docker_available():
+            return False, "Docker 不可用", 0
+
+        directory = directory.resolve()
+        if not directory.exists():
+            return True, "目录不存在", 0
+
+        try:
+            items = [x for x in directory.iterdir() if x.name != ".gitkeep"]
+            count = len(items)
+            if count == 0:
+                return True, "目录为空", 0
+        except Exception:
+            count = 0
+
+        mount_path = "/clean_target"
+
+        cmd = [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            f"{directory}:{mount_path}",
+            "alpine",
+            "sh",
+            "-c",
+            f"rm -rf {mount_path}/*",
+        ]
+
+        code, stdout, stderr = await self._run_command(cmd, timeout=30)
+
+        if code == 0:
+            return True, "清理成功", count
+        else:
+            return False, f"清理失败: {stderr or stdout}", 0
+
 
 class URLParser:
     """Apple Music URL 解析器"""
