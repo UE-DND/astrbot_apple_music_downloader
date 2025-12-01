@@ -12,10 +12,10 @@ from .downloader import (
 )
 
 __all__ = [
-    'ConfigGenerator',
-    'DockerService',
-    'DownloadQuality', 
-    'DownloadResult',
-    'ServiceStatus',
-    'URLParser',
+    "ConfigGenerator",
+    "DockerService",
+    "DownloadQuality",
+    "DownloadResult",
+    "ServiceStatus",
+    "URLParser",
 ]
