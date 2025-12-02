@@ -5,6 +5,7 @@ Apple Music Downloader - AstrBot 插件
 import os
 import asyncio
 import shutil
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -45,7 +46,8 @@ class AppleMusicDownloader(Star):
         self._current_downloader: Optional[str] = None
 
         self._cleanup_task: Optional[asyncio.Task] = None
-        self._cleanup_interval = 24 * 60 * 60
+        self._cleanup_interval = 60 * 60  # 每小时检查一次
+        self._file_ttl = 24 * 60 * 60  # 文件保留时间：24小时
 
     async def initialize(self):
         """插件初始化"""
@@ -68,7 +70,7 @@ class AppleMusicDownloader(Star):
             logger.warning("Docker 不可用，部分功能可能受限")
 
         self._cleanup_task = asyncio.create_task(self._periodic_cleanup())
-        logger.info("已启动定时清理任务（每24小时执行）")
+        logger.info("已启动定时清理任务（每小时检查，删除超过24小时的文件）")
 
         logger.info("Apple Music Downloader 插件初始化完成")
 
@@ -99,8 +101,13 @@ class AppleMusicDownloader(Star):
                 logger.error(f"定时清理任务出错: {e}")
                 await asyncio.sleep(60)
 
-    async def _cleanup_downloads(self):
-        """清理所有下载的文件"""
+    async def _cleanup_downloads(self, force_all: bool = False):
+        """清理过期的下载文件
+
+        Args:
+            force_all: 如果为 True，则删除所有文件（用于手动清理）；
+                       否则只删除超过 24 小时的文件
+        """
         if not self.docker_service:
             logger.warning("Docker 服务未初始化，无法清理下载目录")
             return 0, 0
@@ -117,25 +124,33 @@ class AppleMusicDownloader(Star):
 
         cleaned_count = 0
         error_count = 0
-        total_items = 0
+        skipped_count = 0
+        now = time.time()
 
         for downloads_dir in download_dirs:
             try:
                 if not downloads_dir.exists():
-                    logger.info(f"下载目录不存在，跳过: {downloads_dir}")
+                    logger.debug(f"下载目录不存在，跳过: {downloads_dir}")
                     continue
 
                 items = list(downloads_dir.iterdir())
-
                 items = [i for i in items if i.name != ".gitkeep"]
 
                 if not items:
                     continue
 
-                total_items += len(items)
-
                 for item in items:
                     try:
+                        # 获取文件/目录的修改时间
+                        mtime = item.stat().st_mtime
+                        age = now - mtime
+
+                        # 如果不是强制删除，且文件未过期，则跳过
+                        if not force_all and age < self._file_ttl:
+                            skipped_count += 1
+                            continue
+
+                        # 删除过期文件/目录
                         if item.is_file() or item.is_symlink():
                             item.unlink()
                         elif item.is_dir():
@@ -152,11 +167,13 @@ class AppleMusicDownloader(Star):
                 continue
 
         if cleaned_count > 0:
-            logger.info(f"定时清理完成，共清理 {cleaned_count} 个文件/文件夹")
+            logger.info(f"定时清理完成，共清理 {cleaned_count} 个过期文件/文件夹")
         elif error_count > 0:
             logger.warning(f"清理结束，但有 {error_count} 个文件清理失败")
+        elif skipped_count > 0:
+            logger.debug(f"清理检查完成，{skipped_count} 个文件未过期，暂不清理")
         else:
-            logger.info("下载目录已为空，无需清理")
+            logger.debug("下载目录已为空，无需清理")
 
         return cleaned_count, error_count
 
@@ -465,7 +482,7 @@ class AppleMusicDownloader(Star):
             return
         yield event.plain_result("> 正在清理下载文件...")
 
-        cleaned_count, error_count = await self._cleanup_downloads()
+        cleaned_count, error_count = await self._cleanup_downloads(force_all=True)
 
         msg = []
         if cleaned_count > 0:
