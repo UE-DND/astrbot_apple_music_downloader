@@ -101,7 +101,7 @@ git fetch && git reset --hard origin/master
 # 更新插件子模块
 cd apple-music-downloader && git fetch && git reset --hard origin/master && cd ..
 
-# 更新后会删除配置文件，重启 AstrBot 以重新生成
+# 某些更新方式可能会删除配置文件，重启 AstrBot 以重新生成
 ```
 
 ## ⚠️ 注意

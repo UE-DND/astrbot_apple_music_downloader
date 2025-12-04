@@ -723,6 +723,7 @@ class DockerService:
         env_vars["DECRYPT_PORT"] = str(self.decrypt_port)
         env_vars["M3U8_PORT"] = str(self.m3u8_port)
         env_vars["AMDL_NON_INTERACTIVE"] = "1"
+        env_vars["AMDL_MAX_RETRIES"] = str(self.config.get("max_retries", 3))
         env_vars["AMDL_USE_SAVED"] = "1"
         env_vars["WRAPPER_HOST"] = self.WRAPPER_CONTAINER_NAME
 

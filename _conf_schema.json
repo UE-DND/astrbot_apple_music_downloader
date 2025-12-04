@@ -13,19 +13,19 @@
       "max_queue_size": {
         "description": "最大队列长度",
         "type": "int",
-        "default": 20,
+        "default": 10,
         "hint": "最多允许多少个任务排队等待"
       },
       "task_timeout": {
         "description": "任务超时时间（秒）",
         "type": "int",
-        "default": 80,
+        "default": 120,
         "hint": "单个下载任务的最大执行时间"
       },
       "queue_timeout": {
         "description": "队列等待超时（秒）",
         "type": "int",
-        "default": 300,
+        "default": 600,
         "hint": "任务在队列中等待的最大时间，超时自动取消"
       },
       "notify_progress": {
@@ -65,6 +65,12 @@
     "type": "int",
     "default": 120,
     "hint": "单曲下载最长等待时间，超时将取消任务"
+  },
+  "max_retries": {
+    "description": "下载失败重试次数",
+    "type": "int",
+    "default": 1,
+    "hint": "下载失败时自动重试的最大次数，设为 0 禁用重试"
   },
   "max_file_size_mb": {
     "description": "最大发送文件大小（MB）",

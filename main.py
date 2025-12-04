@@ -205,8 +205,8 @@ class AppleMusicDownloader(Star):
 
     async def _send_notification(self, unified_msg_origin: str, message: str) -> None:
         """发送主动消息通知"""
-        chain = MessageChain().message(message)
-        await self.context.send_message(unified_msg_origin, chain)
+        message_chain = MessageChain(chain=[Comp.Plain(message)])
+        await self.context.send_message(unified_msg_origin, message_chain)
 
     # ==================== 下载 ====================
 
@@ -729,8 +729,8 @@ class AppleMusicDownloader(Star):
         if self.config.get("send_cover", True) and result.cover_path:
             if os.path.exists(result.cover_path):
                 try:
-                    chain = MessageChain().image(result.cover_path)
-                    await self.context.send_message(unified_msg_origin, chain)
+                    cover_chain = MessageChain(chain=[Comp.Image.fromFileSystem(result.cover_path)])
+                    await self.context.send_message(unified_msg_origin, cover_chain)
                 except Exception as e:
                     logger.warning(f"发送封面失败: {e}")
 
@@ -743,34 +743,34 @@ class AppleMusicDownloader(Star):
             file_name = os.path.basename(file_path)
 
             if file_size > max_size:
-                chain = MessageChain().message(
+                chain = MessageChain(chain=[Comp.Plain(
                     f"> {file_name}\n"
                     f"! 文件过大 ({file_size / 1024 / 1024:.1f}MB)，已保存到服务器"
-                )
+                )])
                 await self.context.send_message(unified_msg_origin, chain)
                 continue
 
             try:
-                file_chain = MessageChain().file(file_path, file_name)
+                file_chain = MessageChain(chain=[Comp.File(file=file_path, name=file_name)])
                 await self.context.send_message(unified_msg_origin, file_chain)
             except Exception as e:
                 logger.warning(f"发送文件失败 {file_name}: {e}")
                 try:
                     if file_path.endswith((".m4a", ".mp3")):
-                        record_chain = MessageChain().record(file_path)
+                        record_chain = MessageChain(chain=[Comp.Record(file=file_path, url=file_path)])
                         await self.context.send_message(
                             unified_msg_origin, record_chain
                         )
                 except Exception:
-                    chain = MessageChain().message(
+                    chain = MessageChain(chain=[Comp.Plain(
                         f"> {file_name} 发送失败，已保存到服务器"
-                    )
+                    )])
                     await self.context.send_message(unified_msg_origin, chain)
 
         if len(result.file_paths) > 5:
-            chain = MessageChain().message(
+            chain = MessageChain(chain=[Comp.Plain(
                 f"> 还有 {len(result.file_paths) - 5} 个文件已保存到服务器"
-            )
+            )])
             await self.context.send_message(unified_msg_origin, chain)
 
     # ==================== 定时清理 ====================
