@@ -13,7 +13,7 @@
 
    ```bash
    cd AstrBot/data/plugins
-   git clone --recurse-submodules https://gh.llkk.cc/https://github.com/UE-DND/astrbot_apple_music_downloader.git
+   git clone --recurse-submodules https://gh-proxy.com/https://github.com/UE-DND/astrbot_apple_music_downloader.git
    ```
 
 2. 进入核心下载器，配置 `config.yaml`
