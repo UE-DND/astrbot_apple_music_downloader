@@ -275,7 +275,12 @@ class DownloadQueue:
             user_tasks = self._tasks_by_user.get(user_id, [])
             for task_id in user_tasks:
                 task = self._tasks_by_id.get(task_id)
-                if task and task.url == url and task.status == TaskStatus.PENDING:
+                if (
+                    task
+                    and task.url == url
+                    and task.quality == quality
+                    and task.status == TaskStatus.PENDING
+                ):
                     return False, f"您已有相同的下载任务在队列中（ID: {task_id}）", task
 
             # 创建任务

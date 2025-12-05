@@ -399,6 +399,9 @@ class DockerService:
 
         files = entry.get("files", [])
         cover = entry.get("cover")
+        files_sent = entry.get("files_sent", False)
+
+        # 检查文件是否存在
         missing = [p for p in files if not os.path.exists(p)]
         if cover and not os.path.exists(cover):
             cover = None
@@ -407,7 +410,18 @@ class DockerService:
             self._save_cache(cache)
             return None
 
-        if files:
+        # 如果文件已经发送过，返回特殊标记的结果
+        if files and files_sent:
+            result = DownloadResult(
+                success=True,
+                message="使用已存在的下载文件（已发送过）",
+                file_paths=files,
+                cover_path=cover,
+            )
+            # 标记为已发送，防止重复发送
+            result.files_sent = True
+            return result
+        elif files:
             return DownloadResult(
                 success=True,
                 message="使用已存在的下载文件",
@@ -423,12 +437,14 @@ class DockerService:
         single_song: bool,
         files: List[str],
         cover: Optional[str],
+        files_sent: bool = False,
     ):
         cache = self._load_cache()
         cache[self._cache_key(url, quality, single_song)] = {
             "files": files,
             "cover": cover,
             "ts": time.time(),
+            "files_sent": files_sent,  # 标记文件是否已发送
         }
         self._save_cache(cache)
 
@@ -701,6 +717,9 @@ class DockerService:
                 logger.info(f"[DEBUG] 使用缓存文件: {cached.file_paths}")
             return cached
 
+        # 记录下载前已存在的文件，用于后续排除（避免误判其他任务的文件为本次下载）
+        existing_files = self._get_existing_files(downloads_dir)
+
         cmd = [
             self._bash_path or "bash",
             str(self.downloader_path / "start.sh"),
@@ -774,7 +793,9 @@ class DockerService:
 
             return DownloadResult(success=False, message="下载失败", error=error_msg)
 
-        downloaded_files = self._find_recent_files(downloads_dir)
+        downloaded_files = self._find_recent_files(
+            downloads_dir, exclude_files=existing_files
+        )
         cover_path = self._find_cover([downloads_dir])
 
         if self.debug_mode:
@@ -932,15 +953,27 @@ class DockerService:
         directory: Path,
         extensions: tuple = (".m4a", ".flac", ".mp3", ".opus", ".wav"),
         max_age_seconds: int = 300,
+        exclude_files: Optional[set] = None,
     ) -> List[str]:
-        """查找最近下载的文件"""
+        """查找最近下载的文件
+
+        Args:
+            directory: 搜索目录
+            extensions: 文件扩展名过滤
+            max_age_seconds: 最大文件年龄（秒）
+            exclude_files: 需要排除的文件路径集合（用于避免重复发送）
+        """
         current_time = time.time()
         recent_files = []
+        exclude_set = exclude_files or set()
 
         for root, _, files in os.walk(directory):
             for file in files:
                 if file.lower().endswith(extensions):
                     file_path = os.path.join(root, file)
+                    # 排除已存在的文件
+                    if file_path in exclude_set:
+                        continue
                     try:
                         mtime = os.path.getmtime(file_path)
                         if current_time - mtime < max_age_seconds:
@@ -949,6 +982,28 @@ class DockerService:
                         continue
 
         return sorted(recent_files, key=os.path.getmtime, reverse=True)
+
+    def _get_existing_files(
+        self,
+        directory: Path,
+        extensions: tuple = (".m4a", ".flac", ".mp3", ".opus", ".wav"),
+    ) -> set:
+        """获取目录中已存在的音频文件路径集合
+
+        用于在下载前记录已存在的文件，避免后续误判为新下载的文件
+        """
+        existing_files = set()
+
+        if not directory.exists():
+            return existing_files
+
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.lower().endswith(extensions):
+                    file_path = os.path.join(root, file)
+                    existing_files.add(file_path)
+
+        return existing_files
 
     def _find_cover(self, directories: List[Path]) -> Optional[str]:
         """在指定的下载目录中查找最近的封面文件"""

@@ -44,20 +44,29 @@ class QueueCallbacks:
 
         # 下载成功后发送文件
         if result.success and result.file_paths:
-            try:
+            # 检查文件是否已经发送过（来自缓存的已发送文件）
+            if getattr(result, "files_sent", False):
+                logger.info(f"文件已发送过，跳过重复发送: {task.task_id}")
                 await self._send_notification(
                     task.unified_msg_origin,
-                    f"√ 下载完成！\n> 任务ID: {task.task_id}\n> 正在发送文件...",
+                    f"√ 下载完成（文件已存在）\n> 任务ID: {task.task_id}\n> 文件已在之前发送过",
                 )
-                await self._plugin.file_manager.send_downloaded_files(
-                    task.unified_msg_origin, result
-                )
-                # 标记文件已发送
-                result.files_sent = True
-            except Exception as e:
-                logger.error(f"发送文件失败: {e}")
-                result.files_sent = False
-                result.send_error = str(e)
+            else:
+                try:
+                    await self._send_notification(
+                        task.unified_msg_origin,
+                        f"√ 下载完成！\n> 任务ID: {task.task_id}\n> 正在发送文件...",
+                    )
+                    await self._plugin.file_manager.send_downloaded_files(
+                        task.unified_msg_origin, result
+                    )
+                    # 标记文件已发送并更新缓存
+                    result.files_sent = True
+                    self._update_cache_sent_status(task.url, task.quality, task.single_song)
+                except Exception as e:
+                    logger.error(f"发送文件失败: {e}")
+                    result.files_sent = False
+                    result.send_error = str(e)
 
         return result
 
@@ -151,6 +160,26 @@ class QueueCallbacks:
                 await self._send_notification(task.unified_msg_origin, message)
         except Exception as e:
             logger.warning(f"发送位置变化通知失败: {e}")
+
+    def _update_cache_sent_status(self, url: str, quality: str, single_song: bool) -> None:
+        """更新缓存中的发送状态"""
+        try:
+            from ..services import DownloadQuality
+            quality_enum = DownloadQuality(quality)
+
+            # 获取现有缓存条目并更新发送状态
+            docker_service = self._plugin.docker_service
+            cache = docker_service._load_cache()
+            key = docker_service._cache_key(url, quality_enum, single_song)
+
+            if key in cache:
+                cache[key]["files_sent"] = True
+                docker_service._save_cache(cache)
+                logger.debug(f"已更新缓存发送状态: {url}")
+            else:
+                logger.debug(f"缓存中未找到条目: {url}")
+        except Exception as e:
+            logger.warning(f"更新缓存发送状态失败: {e}")
 
     async def _send_notification(self, unified_msg_origin: str, message: str) -> None:
         """发送主动消息通知"""
