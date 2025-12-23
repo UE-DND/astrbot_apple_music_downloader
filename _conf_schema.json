@@ -1,0 +1,265 @@
+{
+  "wrapper_mode": {
+    "description": "Wrapper 服务模式",
+    "type": "string",
+    "default": "remote",
+    "options": ["native", "remote"],
+    "hint": "native ; remote"
+  },
+  "wrapper_url": {
+    "description": "Wrapper-Manager 服务地址",
+    "type": "string",
+    "default": "127.0.0.1:18923",
+    "hint": "gRPC 服务地址，本地: 127.0.0.1:18923; 公共实例: wm.wol.moe / wm1.wol.moe"
+  },
+  "wrapper_secure": {
+    "description": "使用 TLS 加密",
+    "type": "bool",
+    "default": false,
+    "hint": "是否使用 TLS/SSL 连接。remote 模式下需为 true"
+  },
+  "queue_config": {
+    "description": "下载队列配置",
+    "type": "object",
+    "hint": "控制下载任务的排队和执行行为",
+    "items": {
+      "max_queue_size": {
+        "description": "最大队列长度",
+        "type": "int",
+        "default": 10,
+        "hint": "最多允许多少个任务排队等待"
+      },
+      "task_timeout": {
+        "description": "任务超时时间（秒）",
+        "type": "int",
+        "default": 300,
+        "hint": "单个下载任务的最大执行时间"
+      },
+      "queue_timeout": {
+        "description": "队列等待超时（秒）",
+        "type": "int",
+        "default": 600,
+        "hint": "任务在队列中等待的最大时间，超时自动取消"
+      },
+      "notify_progress": {
+        "description": "推送进度通知",
+        "type": "bool",
+        "default": true,
+        "hint": "是否向用户主动推送队列进度变化通知"
+      },
+      "notify_queue_position": {
+        "description": "推送队列位置变化",
+        "type": "bool",
+        "default": true,
+        "hint": "是否在队列位置变化时通知用户"
+      },
+      "allow_cancel": {
+        "description": "允许取消任务",
+        "type": "bool",
+        "default": true,
+        "hint": "是否允许用户取消自己的排队任务"
+      },
+      "max_tasks_per_user": {
+        "description": "每用户最大排队数",
+        "type": "int",
+        "default": 2,
+        "hint": "单个用户最多同时排队的任务数量"
+      }
+    }
+  },
+  "region_config": {
+    "description": "地区配置",
+    "type": "object",
+    "items": {
+      "storefront": {
+        "description": "默认地区代码",
+        "type": "string",
+        "default": "cn",
+        "hint": "Apple Music 地区代码，如 cn, us, jp, hk 等"
+      },
+      "language": {
+        "description": "默认语言",
+        "type": "string",
+        "default": "zh-Hans-CN",
+        "hint": "元数据和歌词的首选语言"
+      },
+      "language_warning": {
+        "description": "语言不存在警告",
+        "type": "bool",
+        "default": true,
+        "hint": "当指定语言不存在时是否显示警告"
+      }
+    }
+  },
+  "download_config": {
+    "description": "下载配置",
+    "type": "object",
+    "hint": "Apple Music 下载器的详细配置",
+    "items": {
+      "default_quality": {
+        "description": "默认音质",
+        "type": "string",
+        "default": "alac",
+        "options": ["alac", "aac"],
+        "hint": "不指定音质时使用的默认值: alac(无损), aac(高品质)"
+      },
+      "codec_priority": {
+        "description": "编解码器优先级",
+        "type": "string",
+        "default": "alac,aac",
+        "hint": "逗号分隔的优先级列表: alac, aac"
+      },
+      "codec_alternative": {
+        "description": "允许备选编解码器",
+        "type": "bool",
+        "default": true,
+        "hint": "当首选编解码器不可用时尝试其他编解码器"
+      },
+      "max_sample_rate": {
+        "description": "最高采样率",
+        "type": "int",
+        "default": 192000,
+        "hint": "ALAC 最高采样率，可选: 192000, 96000, 48000, 44100"
+      },
+      "max_bit_depth": {
+        "description": "最高位深度",
+        "type": "int",
+        "default": 24,
+        "hint": "ALAC 最高位深度，可选: 24, 16"
+      },
+      "atmos_convert_to_m4a": {
+        "description": "Atmos 转换为 M4A",
+        "type": "bool",
+        "default": true,
+        "hint": "将 EC3/AC3 Atmos 封装为 M4A 格式"
+      },
+      "save_lyrics": {
+        "description": "保存歌词",
+        "type": "bool",
+        "default": true,
+        "hint": "下载歌词并嵌入/保存"
+      },
+      "lyrics_format": {
+        "description": "歌词格式",
+        "type": "string",
+        "default": "lrc",
+        "options": ["lrc", "ttml"],
+        "hint": "lrc: LRC 格式, ttml: 原始 TTML 格式"
+      },
+      "lyrics_extra": {
+        "description": "附加歌词",
+        "type": "string",
+        "default": "translation,pronunciation",
+        "hint": "逗号分隔: translation(翻译), pronunciation(注音)"
+      },
+      "save_cover": {
+        "description": "保存封面",
+        "type": "bool",
+        "default": true,
+        "hint": "下载并嵌入专辑封面"
+      },
+      "cover_format": {
+        "description": "封面格式",
+        "type": "string",
+        "default": "png",
+        "options": ["jpg", "png"]
+      },
+      "cover_size": {
+        "description": "封面尺寸",
+        "type": "string",
+        "default": "5000x5000",
+        "hint": "封面分辨率，如 5000x5000, 3000x3000"
+      },
+      "decrypt_timeout_seconds": {
+        "description": "解密超时（秒）",
+        "type": "int",
+        "default": 600,
+        "hint": "解密阶段最长等待时间，超时会判定失败"
+      }
+    }
+  },
+  "metadata_config": {
+    "description": "元数据配置",
+    "type": "object",
+    "items": {
+      "embed_metadata": {
+        "description": "嵌入元数据",
+        "type": "string",
+        "default": "title,artist,album,album_artist,composer,album_created,genre,created,track,tracknum,disk,lyrics,cover,copyright,record_company,upc,isrc,rtng",
+        "hint": "逗号分隔的元数据标签列表"
+      }
+    }
+  },
+  "path_config": {
+    "description": "路径配置",
+    "type": "object",
+    "items": {
+      "download_dir": {
+        "description": "下载目录",
+        "type": "string",
+        "default": "downloads",
+        "hint": "音频文件保存的根目录"
+      },
+      "song_name_format": {
+        "description": "歌曲文件名格式",
+        "type": "string",
+        "default": "{disk}-{tracknum:02d} {title}",
+        "hint": "支持变量: {title}, {artist}, {album}, {tracknum}, {disk}, {isrc}, {created}"
+      },
+      "dir_path_format": {
+        "description": "目录路径格式",
+        "type": "string",
+        "default": "{album_artist}/{album}",
+        "hint": "相对于下载目录的子目录结构"
+      },
+      "playlist_dir_format": {
+        "description": "播放列表目录格式",
+        "type": "string",
+        "default": "playlists/{playlistName}",
+        "hint": "播放列表的保存目录"
+      },
+      "playlist_song_format": {
+        "description": "播放列表歌曲格式",
+        "type": "string",
+        "default": "{playlistSongIndex:02d}. {artist} - {title}",
+        "hint": "播放列表中歌曲的文件名格式"
+      }
+    }
+  },
+  "file_config": {
+    "description": "文件管理配置",
+    "type": "object",
+    "items": {
+      "max_file_size_mb": {
+        "description": "最大发送文件大小（MB）",
+        "type": "int",
+        "default": 200,
+        "hint": "超过此大小的文件将不会发送，仅保存在服务器"
+      },
+      "send_cover": {
+        "description": "是否发送专辑封面",
+        "type": "bool",
+        "default": true,
+        "hint": "下载完成后是否同时发送专辑封面图片"
+      },
+      "cleanup_interval_hours": {
+        "description": "清理间隔（小时）",
+        "type": "int",
+        "default": 1,
+        "hint": "自动清理过期文件的间隔时间"
+      },
+      "file_ttl_hours": {
+        "description": "文件保留时间（小时）",
+        "type": "int",
+        "default": 24,
+        "hint": "文件在服务器上保留的时间"
+      }
+    }
+  },
+  "debug_mode": {
+    "description": "调试模式",
+    "type": "bool",
+    "default": true,
+    "hint": "启用后输出详细日志"
+  }
+}
