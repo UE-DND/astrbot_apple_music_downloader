@@ -192,6 +192,27 @@ def get_suffix(codec: str, convert_atmos: bool) -> str:
         return ".m4a"
 
 
+def get_output_suffix(
+    codec: str,
+    convert_atmos: bool,
+    convert_after_download: bool = False,
+    convert_format: str = ""
+) -> str:
+    """根据配置返回最终输出文件后缀。"""
+    suffix = get_suffix(codec, convert_atmos)
+    if convert_after_download and suffix == ".m4a":
+        format_map = {
+            "flac": ".flac",
+            "mp3": ".mp3",
+            "opus": ".opus",
+            "wav": ".wav"
+        }
+        mapped = format_map.get(convert_format.lower())
+        if mapped:
+            return mapped
+    return suffix
+
+
 def playlist_metadata_to_params(playlist: PlaylistInfo) -> dict:
     """提取歌单元数据用于路径格式化。"""
     return {
@@ -261,9 +282,13 @@ def check_song_exists(
     """检查歌曲文件是否已存在。"""
     song_name, dir_path = get_song_name_and_dir_path(codec, metadata, config, playlist)
     download_dir = config.get_download_path()
-    full_path = download_dir / dir_path / Path(
-        song_name + get_suffix(codec, config.download.atmos_convert_to_m4a)
+    suffix = get_output_suffix(
+        codec,
+        config.download.atmos_convert_to_m4a,
+        config.download.convert_after_download,
+        config.download.convert_format
     )
+    full_path = download_dir / dir_path / Path(song_name + suffix)
     return full_path.exists()
 
 

@@ -362,8 +362,13 @@ async def rip_song(
         else:
             logger.info(f"[{song_id}] Step 4: Skipping lyrics (not configured or not available)")
 
-        logger.info(f"[{song_id}] Step 4: Getting cover (save_cover={config.save_cover}, cover_url={task.metadata.cover_url is not None})")
-        if config.save_cover and task.metadata.cover_url:
+        need_cover = config.save_cover
+        if plugin_config and plugin_config.download.convert_after_download:
+            if plugin_config.download.convert_format.lower() in ("flac", "mp3"):
+                need_cover = True
+
+        logger.info(f"[{song_id}] Step 4: Getting cover (save_cover={need_cover}, cover_url={task.metadata.cover_url is not None})")
+        if need_cover and task.metadata.cover_url:
             try:
                 logger.debug(f"[{song_id}] Step 4: Calling api_client.get_cover...")
                 cover_data = await api_client.get_cover(
@@ -603,7 +608,7 @@ async def rip_song(
             codec=actual_codec,
             song_data=song,
             lyrics=task.metadata.lyrics if config.save_lyrics else None,
-            cover=task.metadata.cover if config.save_cover else None
+            cover=task.metadata.cover
         )
 
     except Exception as e:

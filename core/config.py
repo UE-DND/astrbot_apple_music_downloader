@@ -51,6 +51,9 @@ class DownloadConfig:
     save_cover: bool = True
     cover_format: str = "jpg"
     cover_size: str = "5000x5000"
+    convert_after_download: bool = True
+    convert_format: str = "flac"
+    convert_keep_original: bool = False
     decrypt_timeout_seconds: int = 600
 
 
@@ -155,6 +158,9 @@ class PluginConfig:
             save_cover=download_cfg.get("save_cover", True),
             cover_format=download_cfg.get("cover_format", "jpg"),
             cover_size=download_cfg.get("cover_size", "5000x5000"),
+            convert_after_download=download_cfg.get("convert_after_download", True),
+            convert_format=download_cfg.get("convert_format", "flac"),
+            convert_keep_original=download_cfg.get("convert_keep_original", False),
             decrypt_timeout_seconds=download_cfg.get("decrypt_timeout_seconds", 600),
         )
 

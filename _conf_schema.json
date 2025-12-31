@@ -170,6 +170,25 @@
         "default": "5000x5000",
         "hint": "封面分辨率，如 5000x5000, 3000x3000"
       },
+      "convert_after_download": {
+        "description": "下载后转换格式",
+        "type": "bool",
+        "default": true,
+        "hint": "启用后将 m4a 转换为 flac/mp3/opus/wav"
+      },
+      "convert_format": {
+        "description": "转换目标格式",
+        "type": "string",
+        "default": "flac",
+        "options": ["flac", "mp3", "opus", "wav"],
+        "hint": "与“下载后转换格式”配合使用"
+      },
+      "convert_keep_original": {
+        "description": "保留原始文件",
+        "type": "bool",
+        "default": false,
+        "hint": "转换后是否保留原始 m4a 文件"
+      },
       "decrypt_timeout_seconds": {
         "description": "解密超时（秒）",
         "type": "int",
