@@ -54,10 +54,11 @@ class FileManager:
         self, unified_msg_origin: str, result: DownloadResult
     ) -> None:
         """发送下载的文件"""
-        max_size = self._plugin.config.get("max_file_size_mb", 50) * 1024 * 1024
+        file_config = self._plugin.plugin_config.file
+        max_size = file_config.max_file_size_mb * 1024 * 1024
 
         # 发送封面
-        if self._plugin.config.get("send_cover", True) and result.cover_path:
+        if file_config.send_cover and result.cover_path:
             if os.path.exists(result.cover_path):
                 try:
                     cover_chain = MessageChain(
