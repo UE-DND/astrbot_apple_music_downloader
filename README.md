@@ -1,7 +1,7 @@
 # AstrBot Apple Music Downloader
 
 > ⚠️ 为避免服务器过载和封号风险，AstrBot 方式下仅允许下载单曲，不支持专辑、播放列表等批量下载功能。
-> ⚠️ AstrBot 框架下，Native 模式存在重大故障，暂未排查出原因，目前推荐使用 Remote 模式。
+> ⚠️ AstrBot 框架下，Native 模式存在重大故障导致无法登录账户，暂未排查出原因，目前推荐使用 Remote 模式。
 
 ## 安装
 

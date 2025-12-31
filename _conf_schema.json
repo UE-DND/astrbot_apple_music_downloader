@@ -9,13 +9,13 @@
   "wrapper_url": {
     "description": "Wrapper-Manager 服务地址",
     "type": "string",
-    "default": "127.0.0.1:18923",
+    "default": "wm1.wol.moe",
     "hint": "gRPC 服务地址，本地: 127.0.0.1:18923; 公共实例: wm.wol.moe / wm1.wol.moe"
   },
   "wrapper_secure": {
     "description": "使用 TLS 加密",
     "type": "bool",
-    "default": false,
+    "default": true,
     "hint": "是否使用 TLS/SSL 连接。remote 模式下需为 true"
   },
   "queue_config": {
@@ -259,7 +259,7 @@
   "debug_mode": {
     "description": "调试模式",
     "type": "bool",
-    "default": true,
+    "default": false,
     "hint": "启用后输出详细日志"
   }
 }
