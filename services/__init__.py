@@ -13,13 +13,6 @@ from .downloader import (
     URLParser,
     MetadataFetcher,
 )
-
-from .wrapper_service import (
-    WrapperService,
-    WrapperMode,
-    WrapperStatus,
-)
-
 from .queue import (
     DownloadQueue,
     DownloadTask,
@@ -42,6 +35,10 @@ from .queue import (
     MinimalFormatter,
     default_formatter,
 )
+from .wrapper_service import (
+    WrapperService,
+    WrapperStatus,
+)
 
 __all__ = [
     "DownloaderService",
@@ -51,7 +48,6 @@ __all__ = [
     "URLParser",
     "MetadataFetcher",
     "WrapperService",
-    "WrapperMode",
     "WrapperStatus",
     "DownloadQueue",
     "DownloadTask",

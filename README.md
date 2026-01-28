@@ -1,7 +1,6 @@
 # AstrBot Apple Music Downloader
 
 > ⚠️ 为避免服务器过载和封号风险，AstrBot 方式下仅允许下载单曲，不支持专辑、播放列表等批量下载功能。
-> ⚠️ AstrBot 框架下，Native 模式存在重大故障导致无法登录账户，暂未排查出原因，目前推荐使用 Remote 模式。
 
 ## 安装
 
@@ -10,7 +9,7 @@ cd AstrBot/data/plugins
 git clone https://gh-proxy.com/https://github.com/UE-DND/astrbot_apple_music_downloader.git
 ```
 
-重启 AstrBot 以自动识别插件，插件重启后需要5~10分钟以安装所有组件
+重启 AstrBot 以自动识别插件，插件重启后可能需要 1 分钟以安装所有依赖
 
 ### 项目额外依赖（需手动安装）
 
@@ -24,8 +23,6 @@ AstrBot 只会自动安装 `requirements.txt` 中的 Python 依赖，系统级�
 
 ### 初次启动
 
-建议先使用 [CLI 模式](#通过-cli-使用) 登录 AppleMusic 账户，再通过 AstrBot 框架使用下载功能。
-
 ## 通过 AstrBot 框架使用
 
 1. **检查服务状态**
@@ -34,19 +31,7 @@ AstrBot 只会自动安装 `requirements.txt` 中的 Python 依赖，系统级�
    /am_status
    ```
 
-2. **登录 Apple Music 账户**
-
-   ```bot
-   /am_login 你的AppleID 密码
-   ```
-
-3. **如需 2FA 验证，输入收到的 6 位验证码：**
-
-   ```bot
-   /am_2fa 123456
-   ```
-
-4. **下载音乐**
+2. **下载音乐**
 
    ```bot
    /am https://music.apple.com/cn/album/xxx/123?i=456
@@ -93,18 +78,9 @@ AstrBot 只会自动安装 `requirements.txt` 中的 Python 依赖，系统级�
 
 ### 插件配置项
 
-#### Native 模式（推荐，默认）
-
-> 💡 Native 模式需要登录 AppleMusic 账户
-
-1. 默认配置即可使用，无需修改
-2. 或在 WebUI 中设置 `wrapper_mode` 为 `native`
-
-#### Remote 模式（公共实例）
-
 > 💡 使用公共实例时无需登录账户
 
-1. 在 AstrBot WebUI 中修改 `Wrapper 服务模式` 和 `Wrapper-Manager 服务地址`
+1. 在 AstrBot WebUI 中设置 `Wrapper-Manager 服务地址`
 
 2. 热重启插件
 
@@ -144,7 +120,6 @@ CLI 方式会自动读取 `_conf_schema.json` 以获取 Astrbot 配置
 #### 全局参数
 
 ```bash
---wrapper-mode <native|remote>
 --wrapper-url <host:port>
 --wrapper-secure
 --wrapper-insecure
@@ -204,7 +179,6 @@ CLI 方式会自动读取 `_conf_schema.json` 以获取 Astrbot 配置
 
 ## ⚠️ 注意
 
-- Native 模式需要有效的 Apple Music 订阅
 - 部分曲目可能因地区限制不可用
 - 文件默认于下载 24 小时后自动删除
 - 此项目仅供技术交流，使用此项目即表示完全认识项目功能并对产生的后果承担相关责任

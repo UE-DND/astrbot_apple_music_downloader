@@ -12,11 +12,10 @@ from getpass import getpass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from services import DownloaderService, DownloadQuality, WrapperService
 from .config import PluginConfig
 from .url import URLType, AppleMusicURL
 from .utils import playlist_write_song_index
-from services import DownloaderService, DownloadQuality, WrapperService
-from services.wrapper_service import WrapperMode
 
 
 def _deep_merge(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
@@ -94,8 +93,6 @@ def _build_overrides(args: argparse.Namespace) -> Dict[str, Any]:
     """构建 CLI 覆盖配置。"""
     overrides: Dict[str, Any] = {}
 
-    if args.wrapper_mode:
-        overrides["wrapper_mode"] = args.wrapper_mode
     if args.wrapper_url:
         overrides["wrapper_url"] = args.wrapper_url
     if args.wrapper_secure is not None:
@@ -200,7 +197,6 @@ async def _handle_status(config: PluginConfig) -> int:
         lines = [
             "服务状态",
             "-" * 20,
-            f"Wrapper 模式: {service_status.wrapper_mode}",
             f"Wrapper 地址: {service_status.wrapper_url}",
             f"连接状态: {'√ 已连接' if wrapper_status.connected else '× 未连接'}",
             f"服务就绪: {'√ 是' if wrapper_status.ready else '× 否'}",
@@ -250,44 +246,6 @@ async def _handle_login(config: PluginConfig, username: str, password: str) -> i
             username = input("Apple ID: ").strip()
         if not password:
             password = getpass("密码: ")
-
-        if wrapper_service.mode == WrapperMode.NATIVE:
-            success, msg = await wrapper_service.login_docker_wrapper(username, password)
-            if success:
-                print("√ 登录成功")
-                return 0
-
-            msg_lower = msg.lower()
-            if "2fa" in msg_lower or "verification" in msg_lower or "验证码" in msg:
-                print("需要双因素验证码")
-                code = await _prompt_input("请输入 6 位验证码: ")
-                code = code.strip()
-                if not code.isdigit() or len(code) != 6:
-                    print("× 验证码格式错误，请输入 6 位数字")
-                    return 1
-
-                code_file = (
-                    wrapper_service.plugin_dir
-                    / "bin"
-                    / "rootfs"
-                    / "data"
-                    / "data"
-                    / "com.apple.android.music"
-                    / "files"
-                    / "code"
-                )
-                code_file.parent.mkdir(parents=True, exist_ok=True)
-                code_file.write_text(code, encoding="utf-8")
-
-                success, msg = await wrapper_service.login_docker_wrapper(username, password)
-                if success:
-                    print("√ 登录成功")
-                    return 0
-                print(f"× 登录失败: {msg}")
-                return 1
-
-            print(f"× 登录失败: {msg}")
-            return 1
 
         success, msg = await wrapper_service.init()
         if not success:
@@ -653,7 +611,6 @@ def _build_parser() -> argparse.ArgumentParser:
         description="AstrBot Apple Music Downloader CLI",
     )
     parser.add_argument("--config", help="配置文件路径(JSON)")
-    parser.add_argument("--wrapper-mode", choices=["native", "remote"], help="Wrapper 模式")
     parser.add_argument("--wrapper-url", help="Wrapper 服务地址")
     parser.add_argument("--wrapper-secure", dest="wrapper_secure", action="store_true")
     parser.add_argument("--wrapper-insecure", dest="wrapper_secure", action="store_false")

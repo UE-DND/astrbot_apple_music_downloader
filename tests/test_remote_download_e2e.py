@@ -17,7 +17,7 @@ from core.config import PluginConfig
 from services.downloader import DownloaderService, DownloadQuality
 from services.wrapper_service import WrapperService
 
-REMOTE_INSTANCE_URL = "wm.wol.moe"
+REMOTE_INSTANCE_URL = "wm1.wol.moe"
 REMOTE_INSTANCE_SECURE = True
 DEFAULT_TEST_SONG_URL = "https://music.apple.com/cn/song/neo-aspect/1799894983"
 DEFAULT_STOREFRONT = "cn"

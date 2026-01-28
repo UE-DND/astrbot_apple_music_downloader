@@ -1,16 +1,9 @@
 {
-  "wrapper_mode": {
-    "description": "Wrapper 服务模式",
-    "type": "string",
-    "default": "remote",
-    "options": ["native", "remote"],
-    "hint": "native ; remote"
-  },
   "wrapper_url": {
     "description": "Wrapper-Manager 服务地址",
     "type": "string",
     "default": "wm1.wol.moe",
-    "hint": "gRPC 服务地址，本地: 127.0.0.1:18923; 公共实例: wm.wol.moe / wm1.wol.moe"
+    "hint": "wm.wol.moe / wm1.wol.moe"
   },
   "wrapper_secure": {
     "description": "使用 TLS 加密",

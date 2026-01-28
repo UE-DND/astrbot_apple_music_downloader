@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Callable, Any, Dict
 
-from .types import Codec, M3U8Info, SongInfo, PREFETCH_KEY
 from .metadata import SongMetadata
 from .models import PlaylistInfo
 from .mp4 import (
@@ -17,11 +16,11 @@ from .mp4 import (
     write_metadata, fix_encapsulate, fix_esds_box,
     check_song_integrity, CodecNotFoundException
 )
+from .types import Codec, M3U8Info, SongInfo, PREFETCH_KEY
 from .utils import (
     get_codec_from_codec_id, if_raw_atmos, run_sync,
     check_song_exists, ttml_convent
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +281,6 @@ async def rip_song(
     progress_callback: Optional[Callable[[DownloadStatus, str], None]] = None,
     check_existence: bool = True,
     plugin_config: Any = None,
-    wrapper_service: Any = None,  # 可选：用于快速 decrypt_all
     playlist: Optional[PlaylistInfo] = None
 ) -> DownloadResult:
     """下载单曲并完成解密与封装。"""
@@ -466,61 +464,7 @@ async def rip_song(
 
         decrypt_success = False
 
-        # 优先使用原生模式的快速 decrypt_all，避免逐样本连接带来的性能瓶颈
-        enable_fast_decrypt = False
-        if wrapper_service and hasattr(wrapper_service, "decrypt_all"):
-            mode_value = getattr(getattr(wrapper_service, "mode", None), "value", None)
-            if mode_value is None:
-                mode_value = getattr(wrapper_service, "mode", None)
-            enable_fast_decrypt = mode_value in (None, "native")
-        if enable_fast_decrypt:
-            logger.info(f"[{song_id}] Step 6d: Using FAST decrypt_all with per-key grouping...")
-
-            total_samples = len(task.song_info.samples)
-            task.decrypted_samples = [None] * total_samples
-
-            from collections import Counter, defaultdict
-
-            grouped_samples = defaultdict(list)
-            decrypt_counter = 0
-            fast_error: Optional[str] = None
-
-            # 按密钥分组，复用同一条连接
-            for idx, sample in enumerate(task.song_info.samples):
-                key, is_prefetch = resolve_decrypt_key(task.m3u8_info.keys, sample.descIndex)
-                if not key:
-                    fast_error = f"descIndex={sample.descIndex} 无可用解密密钥"
-                    logger.error(f"[{song_id}] Step 6d: {fast_error}")
-                    break
-
-                grouped_samples[key].append((sample.data, idx))
-
-            if fast_error is None:
-                decrypt_success = True
-                for key, samples_for_key in grouped_samples.items():
-                    decrypt_success, decrypted_list, error_msg = await wrapper_service.decrypt_all(
-                        song_id, key, samples_for_key, None
-                    )
-
-                    if not decrypt_success or not decrypted_list or len(decrypted_list) != len(samples_for_key):
-                        fast_error = error_msg or "解密失败"
-                        decrypt_success = False
-                        logger.error(f"[{song_id}] Step 6d: Fast decrypt failed for key={key}: {fast_error}")
-                        break
-
-                    for decrypted_sample, (_, original_index) in zip(decrypted_list, samples_for_key):
-                        task.decrypted_samples[original_index] = decrypted_sample
-
-                    decrypt_counter += len(samples_for_key)
-
-                task.decrypted_count = decrypt_counter
-                decrypt_success = decrypt_success and None not in task.decrypted_samples
-
-            if not decrypt_success:
-                logger.warning(f"[{song_id}] Fast decrypt_all unavailable or failed, fallback to stream decrypt. Reason: {fast_error or 'unknown'}")
-
         if not decrypt_success:
-            # 远程模式或快速解密失败时回退到流式解密
             logger.info(f"[{song_id}] Step 6d: Using slow DecryptionManager (gRPC stream)...")
             decrypt_manager = get_decryption_manager(wrapper_manager)
             logger.info(f"[{song_id}] Step 6e: Calling decrypt_manager.decrypt_song...")

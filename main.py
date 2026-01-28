@@ -5,16 +5,11 @@ Apple Music Downloader - AstrBot 插件
 from pathlib import Path
 from typing import Optional
 
+from astrbot.api import logger, AstrBotConfig
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
-from astrbot.api import logger, AstrBotConfig
 
 from .core import PluginConfig
-from .services import (
-    DownloaderService,
-    WrapperService,
-    DownloadQueue,
-)
 from .handlers import (
     QueueCallbacks,
     DownloadHandler,
@@ -22,6 +17,11 @@ from .handlers import (
     QueueCommandsHandler,
     ServiceCommandsHandler,
     AccountHandler,
+)
+from .services import (
+    DownloaderService,
+    WrapperService,
+    DownloadQueue,
 )
 
 
@@ -37,7 +37,7 @@ class AppleMusicDownloader(Star):
     Apple Music Downloader 插件
 
     基于 AppleMusicDecrypt 重写，使用原生 Python + gRPC 直接连接 wrapper-manager。
-    支持两种 wrapper 连接模式：Native（原生 Python）、远程服务。
+    通过远程 wrapper-manager 提供下载服务。
     """
 
     def __init__(self, context: Context, config: AstrBotConfig):

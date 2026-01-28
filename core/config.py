@@ -11,7 +11,6 @@ from typing import Optional
 @dataclass
 class WrapperConfig:
     """用于 Wrapper 的服务配置。"""
-    mode: str = "native"  # 本地/远程 模式
     url: str = "127.0.0.1:18923"
     secure: bool = False
 
@@ -109,7 +108,6 @@ class PluginConfig:
 
         # Wrapper 配置
         instance.wrapper = WrapperConfig(
-            mode=config.get("wrapper_mode", "native"),
             url=config.get("wrapper_url", "127.0.0.1:18923"),
             secure=config.get("wrapper_secure", False),
         )

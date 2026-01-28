@@ -3,10 +3,7 @@ Apple Music Downloader 服务。
 基于核心模块提供高层下载能力。
 """
 
-import asyncio
-import os
-import re
-import time
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -14,7 +11,6 @@ from typing import Optional, List, Dict, Any, Tuple
 
 from .logger import LoggerInterface, get_logger
 
-import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # 尝试相对导入,失败则使用绝对导入(支持独立运行)
@@ -101,7 +97,6 @@ class DownloadResult:
 class ServiceStatus:
     """服务状态。"""
     wrapper_connected: bool = False
-    wrapper_mode: str = ""
     wrapper_url: str = ""
     wrapper_regions: List[str] = field(default_factory=list)
     api_available: bool = False
@@ -221,7 +216,6 @@ class DownloaderService:
 
         wrapper_status = await self.wrapper_service.get_status()
         status.wrapper_connected = wrapper_status.connected
-        status.wrapper_mode = wrapper_status.mode.value
         status.wrapper_url = wrapper_status.url
         status.wrapper_regions = wrapper_status.regions
         status.error = wrapper_status.error
@@ -300,7 +294,6 @@ class DownloaderService:
                 progress_callback=progress_callback,
                 check_existence=not force,
                 plugin_config=self.config,
-                wrapper_service=self.wrapper_service,  # 传入快速 decrypt_all
                 playlist=playlist
             )
 
