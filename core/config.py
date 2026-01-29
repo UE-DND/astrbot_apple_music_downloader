@@ -69,7 +69,7 @@ class MetadataConfig:
 @dataclass
 class PathConfig:
     """文件路径配置。"""
-    download_dir: str = "downloads"
+    download_dir: str = "plugin_data/astrbot_plugin_applemusicdownloader/downloads"
     song_name_format: str = "{disk}-{tracknum:02d} {title}"
     dir_path_format: str = "{album_artist}/{album}"
     playlist_dir_format: str = "playlists/{playlistName}"
@@ -198,9 +198,53 @@ class PluginConfig:
     def get_download_path(self) -> Path:
         """获取下载目录的绝对路径。"""
         download_dir = Path(self.path.download_dir)
-        if not download_dir.is_absolute() and self.plugin_dir:
-            download_dir = self.plugin_dir / download_dir
+        if not download_dir.is_absolute():
+            data_dir = self._resolve_astrbot_data_dir()
+            plugin_data_dir = self._resolve_plugin_data_dir(data_dir)
+
+            if data_dir and download_dir.parts and download_dir.parts[0] == "plugin_data":
+                download_dir = data_dir / download_dir
+            elif plugin_data_dir:
+                download_dir = plugin_data_dir / download_dir
+            elif self.plugin_dir:
+                download_dir = self.plugin_dir / download_dir
         return download_dir
+
+    def _resolve_astrbot_data_dir(self) -> Optional[Path]:
+        """尝试解析 AstrBot 的 data 目录。"""
+        try:
+            import importlib
+            module = importlib.import_module("astrbot.core.utils.astrbot_path")
+            return module.get_astrbot_data_path()
+        except Exception:
+            pass
+
+        if not self.plugin_dir:
+            return None
+
+        plugins_dir = self.plugin_dir.parent
+        if plugins_dir.name != "plugins":
+            return None
+
+        data_dir = plugins_dir.parent
+        if data_dir.name != "data":
+            return None
+
+        return data_dir
+
+    def _resolve_plugin_data_dir(self, data_dir: Optional[Path]) -> Optional[Path]:
+        """获取插件的数据目录路径。"""
+        if not data_dir:
+            return None
+
+        plugin_name = self._resolve_plugin_name()
+        return data_dir / "plugin_data" / plugin_name
+
+    def _resolve_plugin_name(self) -> str:
+        """解析插件名称。"""
+        if self.plugin_dir:
+            return self.plugin_dir.name
+        return "astrbot_plugin_applemusicdownloader"
 
     def get_assets_path(self) -> Path:
         """获取资源目录的绝对路径。"""

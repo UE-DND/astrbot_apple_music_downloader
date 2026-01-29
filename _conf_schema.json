@@ -209,8 +209,8 @@
       "download_dir": {
         "description": "下载目录",
         "type": "string",
-        "default": "downloads",
-        "hint": "音频文件保存的根目录"
+        "default": "plugin_data/astrbot_plugin_applemusicdownloader/downloads",
+        "hint": "音频文件保存的根目录（相对路径默认解析到 AstrBot/data/plugin_data/<插件名> 下）"
       },
       "song_name_format": {
         "description": "歌曲文件名格式",

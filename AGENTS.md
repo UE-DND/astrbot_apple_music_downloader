@@ -6,6 +6,7 @@
 - 编排层：`services/`，封装下载流程、队列、日志与 wrapper 管理。
 - 领域核心：`core/`，Apple Music API、下载流水线、封装与落盘。
 - Wrapper 体系：仅保留 `remote` 模式，`services/wrapper_service.py` 统一管理并连接远程 wrapper-manager。
+- 开发文档：位于 `docs/Astrbot`，在进行任何改动前，阅读开发文档以符合 Astrbot 规范。
 
 ## 功能边界与运行模式
 - **AstrBot 指令仅支持单曲链接**（带 `?i=` 参数或 `/song/` 路径）。专辑/歌单/艺术家仅在 CLI 模式支持。
@@ -64,7 +65,6 @@
 
 ## Testing Guidelines
 - 使用 `pytest` + `pytest.mark.asyncio`，目前以 unit + mock 为主。
-- 集成测试需要可用 wrapper 与 Apple Music token，避免在 CI 直连真实账号。
 - 命名规则：`tests/test_*.py`。
 
 ## Commit & Pull Request Guidelines
@@ -72,5 +72,5 @@
 - PR 描述需包含行为变化、配置影响、运行/测试命令。
 
 ## Security & Configuration Notes
-- 禁止提交 Apple Music 账号、token、下载产物。
+- 禁止提交下载产物。
 - 路径模板在 `path_config`（如 `{album_artist}/{album}`），请保持与下载逻辑一致。
