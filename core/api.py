@@ -7,7 +7,7 @@ import asyncio
 import logging
 from io import BytesIO
 from ssl import SSLError
-from typing import Optional
+from typing import Optional, Any
 
 import httpx
 import regex
@@ -121,7 +121,7 @@ class WebAPI:
             await self._set_token_async()
 
             # 使用 token 创建 HTTP 客户端
-            client_kwargs = {
+            client_kwargs: dict[str, Any] = {
                 "headers": {
                     "Authorization": f"Bearer {self.token}",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",

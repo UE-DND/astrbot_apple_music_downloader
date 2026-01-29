@@ -180,10 +180,10 @@ class QueueEventEmitter:
                 logger.warning(f"Event handler error for {event.name}: {e}")
                 return e
 
-        results = await asyncio.gather(
+        results = list(await asyncio.gather(
             *[safe_call(sub) for sub in subscriptions],
             return_exceptions=False
-        )
+        ))
 
         for sub in to_remove:
             self.remove_subscription(sub)

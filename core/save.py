@@ -211,23 +211,25 @@ def save_all(
     playlist: PlaylistInfo = None
 ) -> dict:
     """保存歌曲、歌词与封面。"""
-    result = {
+    result: dict[str, Optional[str]] = {
         "song": None,
         "lyrics": None,
         "cover": None
     }
 
-    result["song"] = save_song(song_data, codec, metadata, config, playlist)
+    song_path = save_song(song_data, codec, metadata, config, playlist)
+    result["song"] = song_path
 
     if config.download.convert_after_download:
         converted = _convert_m4a(
-            result["song"],
+            song_path,
             config.download.convert_format,
             cover,
             config.download.cover_format,
             config.download.convert_keep_original
         )
         if converted:
+            song_path = converted
             result["song"] = converted
 
     if config.download.save_lyrics and lyrics:
@@ -242,8 +244,8 @@ def save_all(
             config.download.cover_format
         )
 
-    if result["song"]:
-        _check_file_integrity(result["song"])
+    if song_path:
+        _check_file_integrity(song_path)
 
     return result
 

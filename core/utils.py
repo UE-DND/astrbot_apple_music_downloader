@@ -72,7 +72,7 @@ def chunk(it, size: int):
 
 def get_digit_from_string(text: str) -> int:
     """提取字符串中的数字并转为整数。"""
-    return int(''.join(filter(str.isdigit, text)))
+    return int("".join(ch for ch in text if ch.isdigit()))
 
 
 def ttml_convent(

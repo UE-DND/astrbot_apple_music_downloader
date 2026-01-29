@@ -192,7 +192,7 @@ async def _check_album_existence(
 async def _prompt_input(prompt: str) -> str:
     """异步读取用户输入。"""
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, lambda: input(prompt))
+    return await loop.run_in_executor(None, input, prompt)
 
 
 async def _handle_status(config: PluginConfig) -> int:

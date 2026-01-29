@@ -8,7 +8,7 @@ import os
 import asyncio
 import shutil
 import time
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Optional
 
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api import logger
@@ -25,7 +25,7 @@ class FileManager:
 
     def __init__(self, plugin: "AppleMusicDownloader"):
         self._plugin = plugin
-        self._cleanup_task: asyncio.Task = None
+        self._cleanup_task: Optional[asyncio.Task] = None
 
     @property
     def _cleanup_interval(self) -> int:

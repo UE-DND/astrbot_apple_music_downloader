@@ -236,9 +236,13 @@ def extract_song(raw_song: bytes, codec: str) -> SongInfo:
     # 解析时间参数
     mvhd = info_xml.find("MovieHeaderBox")
     if mvhd:
+        creation_value = mvhd.get("CreationTime")
+        modification_value = mvhd.get("ModificationTime")
+        creation_time = int(creation_value) if isinstance(creation_value, str) else 0
+        modification_time = int(modification_value) if isinstance(modification_value, str) else 0
         params.update({
-            "CreationTime": convert_mac_timestamp_to_datetime(int(mvhd.get("CreationTime", 0))),
-            "ModificationTime": convert_mac_timestamp_to_datetime(int(mvhd.get("ModificationTime", 0)))
+            "CreationTime": convert_mac_timestamp_to_datetime(creation_time),
+            "ModificationTime": convert_mac_timestamp_to_datetime(modification_time)
         })
 
     tmp_dir.cleanup()

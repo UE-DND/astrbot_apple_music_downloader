@@ -4,7 +4,7 @@
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api import logger
@@ -38,7 +38,11 @@ class DownloadHandler:
                 "发送 '取消' 退出"
             )
 
-            session_data = {"state": "url", "parsed_url": None, "parsed_data": None}
+            session_data: dict[str, Any] = {
+                "state": "url",
+                "parsed_url": None,
+                "parsed_data": None,
+            }
 
             @session_waiter(timeout=60, record_history_chains=False)
             async def interactive_session(
