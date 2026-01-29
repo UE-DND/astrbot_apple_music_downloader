@@ -52,6 +52,7 @@
 - `ref-code/`：上游代码参考，不在生产路径 import。
 
 ## Build, Test, and Development Commands
+- 所有指令都应该在 `.venv/` 虚拟环境中运行。
 - 依赖：`python -m pip install -r "requirements.txt"`。
 - 系统依赖：`ffmpeg`、`gpac`（`MP4Box`）、`Bento4`（`mp4extract/mp4edit/mp4decrypt`），可用 `scripts/install-deps.sh` 安装。
 - 测试：`pytest -q`，或 `pytest "tests/test_core_modules.py" -q`。

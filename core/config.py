@@ -4,8 +4,12 @@ Apple Music Downloader 插件配置管理。
 """
 
 from dataclasses import dataclass, field
+import logging
 from pathlib import Path
 from typing import Optional
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -216,8 +220,12 @@ class PluginConfig:
             import importlib
             module = importlib.import_module("astrbot.core.utils.astrbot_path")
             return module.get_astrbot_data_path()
-        except Exception:
-            pass
+        except (ImportError, AttributeError, OSError) as exc:
+            logger.debug(
+                "解析 AstrBot data 目录失败 stage=import_astrbot_path exc_type=%s",
+                type(exc).__name__,
+                exc_info=True,
+            )
 
         if not self.plugin_dir:
             return None

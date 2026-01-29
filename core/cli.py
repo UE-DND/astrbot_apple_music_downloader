@@ -8,14 +8,20 @@ import argparse
 import asyncio
 import json
 import logging
+from ssl import SSLError
 from getpass import getpass
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+import httpx
 
 from services import DownloaderService, DownloadQuality, WrapperService
 from .config import PluginConfig
 from .url import URLType, AppleMusicURL
 from .utils import playlist_write_song_index
+
+
+logger = logging.getLogger(__name__)
 
 
 def _deep_merge(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
@@ -169,7 +175,15 @@ async def _check_album_existence(
         try:
             if await api_client.exist_on_storefront_by_album_id(album_id, storefront, region):
                 return True
-        except Exception:
+        except (httpx.HTTPError, SSLError, FileNotFoundError) as exc:
+            logger.warning(
+                "检查专辑存在性失败 stage=exist_check album_id=%s storefront=%s region=%s exc_type=%s",
+                album_id,
+                storefront,
+                region,
+                type(exc).__name__,
+                exc_info=True,
+            )
             continue
 
     return False

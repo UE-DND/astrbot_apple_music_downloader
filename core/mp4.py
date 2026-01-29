@@ -32,6 +32,12 @@ class CodecNotFoundException(Exception):
     pass
 
 
+def _new_temp_dir_with_name() -> tuple[TemporaryDirectory, str, Path]:
+    tmp_dir = TemporaryDirectory()
+    name = uuid.uuid4().hex
+    return tmp_dir, name, Path(tmp_dir.name)
+
+
 async def get_available_codecs(m3u8_content: str, m3u8_url: str) -> Tuple[list[str], list[str]]:
     """从 M3U8 中获取可用编码。"""
     parsed_m3u8 = m3u8.loads(m3u8_content, uri=m3u8_url)
@@ -115,15 +121,14 @@ async def extract_media(
 
 def extract_song(raw_song: bytes, codec: str) -> SongInfo:
     """从原始 MP4 数据提取歌曲信息与样本。"""
-    tmp_dir = TemporaryDirectory()
-    mp4_name = uuid.uuid4().hex
-    raw_mp4 = Path(tmp_dir.name) / Path(f"{mp4_name}.mp4")
+    tmp_dir, mp4_name, tmp_path = _new_temp_dir_with_name()
+    raw_mp4 = tmp_path / Path(f"{mp4_name}.mp4")
 
     with open(raw_mp4.absolute(), "wb") as f:
         f.write(raw_song)
 
-    nhml_name = (Path(tmp_dir.name) / Path(mp4_name).with_suffix('.nhml')).absolute()
-    media_name = (Path(tmp_dir.name) / Path(mp4_name).with_suffix('.media')).absolute()
+    nhml_name = (tmp_path / Path(mp4_name).with_suffix('.nhml')).absolute()
+    media_name = (tmp_path / Path(mp4_name).with_suffix('.media')).absolute()
 
     # 使用 gpac 提取 NHML
     # 尝试在常见路径查找 gpac
@@ -136,7 +141,7 @@ def extract_song(raw_song: bytes, codec: str) -> SongInfo:
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=if_shell()
     )
 
-    xml_name = (Path(tmp_dir.name) / Path(mp4_name).with_suffix('.xml')).absolute()
+    xml_name = (tmp_path / Path(mp4_name).with_suffix('.xml')).absolute()
 
     # 使用 MP4Box 提取 ISO 信息
     mp4box_cmd = "MP4Box"
@@ -176,7 +181,7 @@ def extract_song(raw_song: bytes, codec: str) -> SongInfo:
     # 按编码提取解码参数
     match codec:
         case Codec.ALAC:
-            alac_atom_name = (Path(tmp_dir.name) / Path(mp4_name).with_suffix('.atom')).absolute()
+            alac_atom_name = (tmp_path / Path(mp4_name).with_suffix('.atom')).absolute()
             mp4extract_cmd_str = f"{mp4extract_cmd} moov/trak/mdia/minf/stbl/stsd/enca[0]/alac {raw_mp4.absolute()} {alac_atom_name}"
             print(f"[DEBUG extract_song] mp4extract command: {mp4extract_cmd_str}")
             result = subprocess.run(
@@ -197,7 +202,7 @@ def extract_song(raw_song: bytes, codec: str) -> SongInfo:
             print(f"[DEBUG extract_song] decoderParams hex (first 48): {decoder_params[:48].hex()}")
 
         case Codec.AAC | Codec.AAC_DOWNMIX | Codec.AAC_BINAURAL | Codec.AAC_LEGACY:
-            info_name = (Path(tmp_dir.name) / Path(mp4_name).with_suffix('.info')).absolute()
+            info_name = (tmp_path / Path(mp4_name).with_suffix('.info')).absolute()
             if info_name.exists():
                 with open(info_name, "rb") as f:
                     decoder_params = f.read()
@@ -250,14 +255,13 @@ def extract_song(raw_song: bytes, codec: str) -> SongInfo:
 
 def encapsulate(song_info: SongInfo, decrypted_media: bytes, atmos_convert: bool) -> bytes:
     """封装解密后的媒体数据。"""
-    tmp_dir = TemporaryDirectory()
-    name = uuid.uuid4().hex
-    media = Path(tmp_dir.name) / Path(name).with_suffix(".media")
+    tmp_dir, name, tmp_path = _new_temp_dir_with_name()
+    media = tmp_path / Path(name).with_suffix(".media")
 
     with open(media.absolute(), "wb") as f:
         f.write(decrypted_media)
 
-    song_name = Path(tmp_dir.name) / Path(name).with_suffix(get_suffix(song_info.codec, atmos_convert))
+    song_name = tmp_path / Path(name).with_suffix(get_suffix(song_info.codec, atmos_convert))
 
     # 查找 GPAC 工具（Windows 为 gpac.exe）
     gpac_cmd = "gpac"
@@ -284,7 +288,7 @@ def encapsulate(song_info: SongInfo, decrypted_media: bytes, atmos_convert: bool
 
     match song_info.codec:
         case Codec.ALAC:
-            nhml_name = Path(tmp_dir.name) / Path(f"{name}.nhml")
+            nhml_name = tmp_path / Path(f"{name}.nhml")
             with open(nhml_name.absolute(), "w", encoding="utf-8") as f:
                 nhml_xml = BeautifulSoup(song_info.nhml, features="xml")
                 nhml_xml.NHNTStream["baseMediaFile"] = media.name
@@ -303,13 +307,13 @@ def encapsulate(song_info: SongInfo, decrypted_media: bytes, atmos_convert: bool
             else:
                 print(f"[DEBUG encapsulate] gpac output size: {song_name.stat().st_size} bytes")
 
-            alac_params_atom_name = Path(tmp_dir.name) / Path(f"{name}.atom")
+            alac_params_atom_name = tmp_path / Path(f"{name}.atom")
             print(f"[DEBUG encapsulate] decoderParams length: {len(song_info.decoderParams)} bytes")
             print(f"[DEBUG encapsulate] decoderParams hex (first 48): {song_info.decoderParams[:48].hex()}")
             with open(alac_params_atom_name.absolute(), "wb") as f:
                 f.write(song_info.decoderParams)
 
-            final_m4a_name = Path(tmp_dir.name) / Path(f"{name}_final.m4a")
+            final_m4a_name = tmp_path / Path(f"{name}_final.m4a")
             mp4edit_cmd_str = (
                 f'{mp4edit_cmd} --insert moov/trak/mdia/minf/stbl/stsd/alac:{alac_params_atom_name.absolute()} '
                 f'{song_name.absolute()} {final_m4a_name.absolute()}'
@@ -340,8 +344,8 @@ def encapsulate(song_info: SongInfo, decrypted_media: bytes, atmos_convert: bool
                 )
 
         case Codec.AAC_BINAURAL | Codec.AAC_DOWNMIX | Codec.AAC:
-            nhml_name = Path(tmp_dir.name) / Path(f"{name}.nhml")
-            info_name = Path(tmp_dir.name) / Path(f"{name}.info")
+            nhml_name = tmp_path / Path(f"{name}.nhml")
+            info_name = tmp_path / Path(f"{name}.info")
 
             if song_info.decoderParams:
                 with open(info_name.absolute(), "wb") as f:
@@ -393,9 +397,8 @@ def write_metadata(
     params: dict[str, Any]
 ) -> bytes:
     """写入 M4A 元数据。"""
-    tmp_dir = TemporaryDirectory()
-    name = uuid.uuid4().hex
-    song_name = Path(tmp_dir.name) / Path(f"{name}.m4a")
+    tmp_dir, name, tmp_path = _new_temp_dir_with_name()
+    song_name = tmp_path / Path(f"{name}.m4a")
 
     with open(song_name.absolute(), "wb") as f:
         f.write(song)
@@ -430,10 +433,9 @@ def write_metadata(
 
 def fix_encapsulate(song: bytes) -> bytes:
     """使用 FFmpeg 修复 M4A 封装问题。"""
-    tmp_dir = TemporaryDirectory()
-    name = uuid.uuid4().hex
-    song_name = Path(tmp_dir.name) / Path(f"{name}.m4a")
-    new_song_name = Path(tmp_dir.name) / Path(f"{name}_fixed.m4a")
+    tmp_dir, name, tmp_path = _new_temp_dir_with_name()
+    song_name = tmp_path / Path(f"{name}.m4a")
+    new_song_name = tmp_path / Path(f"{name}_fixed.m4a")
 
     with open(song_name.absolute(), "wb") as f:
         f.write(song)
@@ -474,12 +476,11 @@ def fix_encapsulate(song: bytes) -> bytes:
 
 def fix_esds_box(raw_song: bytes, song: bytes) -> bytes:
     """修复 AAC 文件中的 ESDS box。"""
-    tmp_dir = TemporaryDirectory()
-    name = uuid.uuid4().hex
-    esds_name = Path(tmp_dir.name) / Path(f"{name}.atom")
-    raw_song_name = Path(tmp_dir.name) / Path(f"{name}_raw.m4a")
-    song_name = Path(tmp_dir.name) / Path(f"{name}.m4a")
-    final_song_name = Path(tmp_dir.name) / Path(f"{name}_final.m4a")
+    tmp_dir, name, tmp_path = _new_temp_dir_with_name()
+    esds_name = tmp_path / Path(f"{name}.atom")
+    raw_song_name = tmp_path / Path(f"{name}_raw.m4a")
+    song_name = tmp_path / Path(f"{name}.m4a")
+    final_song_name = tmp_path / Path(f"{name}_final.m4a")
 
     with open(raw_song_name.absolute(), "wb") as f:
         f.write(raw_song)
@@ -524,9 +525,8 @@ def fix_esds_box(raw_song: bytes, song: bytes) -> bytes:
 
 def check_song_integrity(song: bytes) -> bool:
     """使用 FFmpeg 校验歌曲文件完整性。"""
-    tmp_dir = TemporaryDirectory()
-    name = uuid.uuid4().hex
-    song_name = Path(tmp_dir.name) / Path(f"{name}.m4a")
+    tmp_dir, name, tmp_path = _new_temp_dir_with_name()
+    song_name = tmp_path / Path(f"{name}.m4a")
 
     with open(song_name.absolute(), "wb") as f:
         f.write(song)

@@ -136,13 +136,7 @@ celerybeat.pid
 
 # Environments
 .env
-.envrc
 .venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
 
 # Spyder project settings
 .spyderproject
@@ -206,7 +200,8 @@ tests/test_downloads/
 # Development documents
 docs/Astrbot
 
-ref-code/
-logs/
-bin/rootfs/data/data/com.apple.android.music/files
-bin/rootfs/system/bin/linker64
+# ref
+ref-code/AppleMusicDecrypt
+
+# PyCharm Check Report
+report/

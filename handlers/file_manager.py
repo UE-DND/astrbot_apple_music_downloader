@@ -67,8 +67,14 @@ class FileManager:
                     await self._plugin.context.send_message(
                         unified_msg_origin, cover_chain
                     )
-                except Exception as e:
-                    logger.warning(f"发送封面失败: {e}")
+                except (RuntimeError, ValueError, OSError) as exc:
+                    logger.warning(
+                        "发送封面失败 stage=send_cover file_path=%s origin=%s exc_type=%s",
+                        result.cover_path,
+                        unified_msg_origin,
+                        type(exc).__name__,
+                        exc_info=True,
+                    )
 
         # 发送音频文件
         for file_path in result.file_paths[:5]:
@@ -95,8 +101,15 @@ class FileManager:
                     chain=[Comp.File(file=file_path, name=file_name)]
                 )
                 await self._plugin.context.send_message(unified_msg_origin, file_chain)
-            except Exception as e:
-                logger.warning(f"发送文件失败 {file_name}: {e}")
+            except (RuntimeError, ValueError, OSError) as exc:
+                logger.warning(
+                    "发送文件失败 stage=send_file file_name=%s file_path=%s origin=%s exc_type=%s",
+                    file_name,
+                    file_path,
+                    unified_msg_origin,
+                    type(exc).__name__,
+                    exc_info=True,
+                )
                 try:
                     if file_path.endswith((".m4a", ".mp3")):
                         record_chain = MessageChain(
@@ -105,11 +118,28 @@ class FileManager:
                         await self._plugin.context.send_message(
                             unified_msg_origin, record_chain
                         )
-                except Exception:
+                except (RuntimeError, ValueError, OSError) as record_exc:
+                    logger.warning(
+                        "发送音频记录失败 stage=send_record file_name=%s file_path=%s origin=%s exc_type=%s",
+                        file_name,
+                        file_path,
+                        unified_msg_origin,
+                        type(record_exc).__name__,
+                        exc_info=True,
+                    )
                     chain = MessageChain(
                         chain=[Comp.Plain(f"> {file_name} 发送失败，已保存到服务器")]
                     )
-                    await self._plugin.context.send_message(unified_msg_origin, chain)
+                    try:
+                        await self._plugin.context.send_message(unified_msg_origin, chain)
+                    except (RuntimeError, ValueError, OSError) as fallback_exc:
+                        logger.warning(
+                            "发送失败提示异常 stage=fallback file_name=%s origin=%s exc_type=%s",
+                            file_name,
+                            unified_msg_origin,
+                            type(fallback_exc).__name__,
+                            exc_info=True,
+                        )
 
         if len(result.file_paths) > 5:
             chain = MessageChain(
