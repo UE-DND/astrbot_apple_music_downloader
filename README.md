@@ -21,9 +21,9 @@ AstrBot 只会自动安装 `requirements.txt` 中的 Python 依赖，系统级�
 
 依赖可通过 `scripts/install-deps.sh` 安装
 
-### 初次启动
+## 初次启动
 
-## 通过 AstrBot 框架使用
+### 通过 AstrBot 框架使用
 
 1. **检查服务状态**
 
@@ -185,4 +185,4 @@ CLI 方式会自动读取 `_conf_schema.json` 以获取 Astrbot 配置
 
 ## 致谢
 
-本项目整合了 [AppleMusicDecrypt](https://github.com/WorldObservationLog/AppleMusicDecrypt)、[wrapper-manager](https://github.com/WorldObservationLog/wrapper-manager) 的功能，二进制文件来自 [wrapper](https://github.com/WorldObservationLog/wrapper)。感谢所有上游开发者的贡献！
+本项目整合了 [AppleMusicDecrypt](https://github.com/WorldObservationLog/AppleMusicDecrypt)、[wrapper-manager](https://github.com/WorldObservationLog/wrapper-manager) 的功能。感谢所有上游开发者的贡献！
